@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Atlas Eleitoral V10 - Ultimate</title>
+    <title>Atlas Eleitoral - Final</title>
     
-    <!-- Bibliotecas -->
+    <!-- Bibliotecas Essenciais -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -14,539 +14,99 @@
     <script src="https://cdn.jsdelivr.net/npm/coloris@latest/dist/coloris.min.js"></script>
 
     <style>
+        /* --- DESIGN SYSTEM (PREMIUM DARK) --- */
         :root {
             --bg-dark: #09090b;
-            --panel-bg: rgba(24, 24, 27, 0.85); /* Vidro escuro */
-            --border: 1px solid rgba(255, 255, 255, 0.08);
+            --panel-bg: rgba(22, 27, 34, 0.95);
+            --border: 1px solid rgba(255, 255, 255, 0.1);
             --accent: #3b82f6;
-            --text-primary: #f4f4f5;
-            --text-secondary: #a1a1aa;
-            --font: 'Inter', sans-serif;
+            --text-main: #ffffff;
+            --text-muted: #94a3b8;
+            --shadow: 0 20px 40px rgba(0,0,0,0.6);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
-        
-        body { font-family: var(--font); background: var(--bg-dark); color: var(--text-primary); overflow: hidden; height: 100vh; }
-        
-        #app { width: 100%; height: 100%; position: relative; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-dark); color: var(--text-main); overflow: hidden; height: 100vh; }
+        #app { width: 100vw; height: 100vh; position: relative; }
         #map { width: 100%; height: 100%; z-index: 1; background: var(--bg-dark); }
 
-        /* --- SIDEBARS (UI LINDA) --- */
-        .sidebar {
-            position: absolute; top: 24px; bottom: 24px; z-index: 1000;
-            background: var(--panel-bg); backdrop-filter: blur(20px);
-            border: var(--border); border-radius: 16px;
-            display: flex; flex-direction: column;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-            transition: all 0.3s ease;
-        }
-        
-        .sidebar-left { left: 24px; width: 380px; }
-        .sidebar-right { right: 24px; width: 400px; }
-
-        .header { padding: 24px; border-bottom: var(--border); }
-        .header h1 { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 4px; display: flex; align-items: center; gap: 10px; }
-        .header p { font-size: 0.8rem; color: var(--text-secondary); font-weight: 500; }
-
-        .controls { padding: 20px; border-bottom: var(--border); display: flex; flex-direction: column; gap: 12px; }
-        .control-row { display: flex; gap: 10px; }
-        
-        select {
-            width: 100%; padding: 12px; background: rgba(255,255,255,0.03);
-            border: var(--border); color: #fff; border-radius: 8px;
-            font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: 0.2s;
-        }
-        select:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.2); }
-
-        .btn-load {
-            width: 100%; padding: 12px; background: var(--accent);
-            border: none; color: white; font-weight: 700; border-radius: 8px;
-            cursor: pointer; transition: transform 0.1s, filter 0.2s;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-        }
-        .btn-load:hover { filter: brightness(1.1); }
-        .btn-load:active { transform: scale(0.98); }
-
-        /* LISTA DE CANDIDATOS */
-        .list-wrap { flex: 1; overflow-y: auto; padding: 10px; }
-        
-        .cand-card {
-            background: rgba(255,255,255,0.02); border: var(--border);
-            border-radius: 10px; padding: 14px; margin-bottom: 8px;
-            display: flex; gap: 12px; align-items: center;
-            cursor: pointer; transition: 0.2s;
-        }
-        .cand-card:hover { background: rgba(255,255,255,0.05); }
-        
-        .cand-check {
-            width: 20px; height: 20px; border-radius: 6px;
-            border: 2px solid rgba(255,255,255,0.2); flex-shrink: 0;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .cand-check.checked { background: var(--accent); border-color: var(--accent); }
-        .cand-check.checked::after { content: '✓'; font-size: 12px; font-weight: 900; }
-
-        .cand-color {
-            width: 32px; height: 32px; border-radius: 8px;
-            border: 2px solid rgba(255,255,255,0.1); flex-shrink: 0;
-            transition: transform 0.2s;
-        }
-        .cand-color:hover { transform: scale(1.1); border-color: #fff; }
-
-        .cand-data { flex: 1; min-width: 0; }
-        .cand-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-        .cand-name { font-weight: 700; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .cand-pct { font-weight: 800; color: var(--accent); }
-        .cand-votes { font-size: 0.75rem; color: var(--text-secondary); }
-        
-        .prog-bg { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 6px; overflow: hidden; }
-        .prog-fill { height: 100%; transition: width 0.6s ease; }
-
-        /* PAINEL DIREITO */
-        .results-content { padding: 20px; overflow-y: auto; flex: 1; }
-        .region-badge {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 6px 12px; background: rgba(59,130,246,0.15);
-            border: 1px solid rgba(59,130,246,0.3); border-radius: 20px;
-            color: #60a5fa; font-size: 0.8rem; font-weight: 600;
-        }
-
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .stat-box { 
-            background: rgba(255,255,255,0.03); border: var(--border);
-            padding: 15px; border-radius: 10px; text-align: center;
-        }
-        .stat-num { font-size: 1.4rem; font-weight: 800; color: #fff; }
-        .stat-lbl { font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
-
-        /* MAP CONTROLS */
-        .map-ui { position: absolute; top: 24px; left: 420px; z-index: 1000; display: flex; gap: 10px; }
-        .ui-btn {
-            width: 40px; height: 40px; background: var(--panel-bg);
-            border: var(--border); color: #fff; border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; backdrop-filter: blur(10px); transition: 0.2s;
-        }
-        .ui-btn:hover { background: var(--accent); border-color: var(--accent); }
-        
-        .back-btn { padding: 0 20px; width: auto; font-weight: 600; font-size: 0.85rem; display: none; }
-
-        .legend {
-            position: absolute; bottom: 30px; left: 420px; z-index: 999;
-            background: var(--panel-bg); padding: 15px; border-radius: 12px;
-            border: var(--border); width: 200px; backdrop-filter: blur(10px);
-        }
-        .grad { height: 8px; background: linear-gradient(90deg, rgba(255,255,255,0.1), #fff); border-radius: 4px; margin: 8px 0; }
-
-        /* LOADING */
+        /* LOADER (COM BOTÃO DE EMERGÊNCIA) */
         #loader {
-            position: absolute; inset: 0; background: var(--bg-dark); z-index: 2000;
+            position: absolute; inset: 0; background: var(--bg-dark); z-index: 9999;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: opacity 0.4s ease;
+            transition: opacity 0.5s ease;
         }
-        .spinner { width: 40px; height: 40px; border: 3px solid rgba(59,130,246,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s infinite linear; }
+        .spinner { width: 50px; height: 50px; border: 3px solid rgba(59,130,246,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s infinite linear; }
         @keyframes spin { to {transform: rotate(360deg);} }
         .hidden { opacity: 0; pointer-events: none; }
-        
-        .empty { text-align: center; color: var(--text-secondary); margin-top: 40px; opacity: 0.6; }
-    </style>
-</head>
-<body>
+        .loader-msg { margin-top: 20px; font-weight: 500; letter-spacing: 1px; color: var(--text-muted); }
+        .emergency-btn { margin-top: 30px; padding: 10px 20px; background: #333; border: 1px solid #555; color: #fff; cursor: pointer; border-radius: 5px; font-size: 0.8rem; display: none; }
 
-<div id="loader">
-    <div class="spinner"></div>
-    <p style="margin-top:20px; font-size:0.9rem; letter-spacing:1px">CARREGANDO BASE DE DADOS...</p>
-</div>
-
-<div id="app">
-    <!-- MAP UI -->
-    <div class="map-ui">
-        <button class="ui-btn back-btn" id="backBtn" onclick="resetToBrazil()">
-            <i class="fas fa-arrow-left" style="margin-right:8px"></i> Brasil
-        </button>
-        <button class="ui-btn" onclick="map.zoomIn()"><i class="fas fa-plus"></i></button>
-        <button class="ui-btn" onclick="map.zoomOut()"><i class="fas fa-minus"></i></button>
-    </div>
-
-    <div class="legend">
-        <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:700; color:#aaa">
-            <span>DISPUTADO</span><span>DOMINANTE</span>
-        </div>
-        <div class="grad"></div>
-    </div>
-
-    <!-- SIDEBAR 1 -->
-    <aside class="sidebar sidebar-left">
-        <div class="header">
-            <h1><i class="fas fa-vote-yea" style="color:var(--accent)"></i> Atlas Eleitoral</h1>
-            <p>Visualização Oficial de Dados do TSE</p>
-        </div>
-        <div class="controls">
-            <div class="control-row">
-                <div style="flex:1">
-                    <label>Ano</label>
-                    <select id="yearSelect"></select>
-                </div>
-                <div style="flex:1">
-                    <label>Turno</label>
-                    <select id="turnSelect">
-                        <option value="1">1º Turno</option>
-                        <option value="2">2º Turno</option>
-                    </select>
-                </div>
-            </div>
-            <div>
-                <label>Cargo</label>
-                <select id="roleSelect">
-                    <option value="president">Presidente</option>
-                    <option value="governor">Governador</option>
-                    <option value="senator">Senador</option>
-                </select>
-            </div>
-            <button class="btn-load" onclick="loadData()">
-                <i class="fas fa-bolt"></i> ATUALIZAR MAPA
-            </button>
-        </div>
-        <div class="list-wrap" id="candList">
-            <div class="empty"><i class="fas fa-filter fa-2x"></i><br><br>Selecione e carregue.</div>
-        </div>
-    </aside>
-
-    <!-- MAP -->
-    <div id="map"></div>
-
-    <!-- SIDEBAR 2 -->
-    <aside class="sidebar sidebar-right">
-        <div class="header">
-            <h1>Resultados</h1>
-            <div class="region-badge" id="currentRegion">Brasil</div>
-        </div>
-        <div class="results-content" id="resultsBody">
-            <div class="empty"><i class="fas fa-mouse-pointer fa-2x"></i><br><br>Clique no mapa.</div>
-        </div>
-    </aside>
-</div>
-
-<script>
-    // --- CONFIGURAÇÃO ---
-    const CONFIG = {
-        years: [2022, 2018, 2014, 2010],
-        ufIds: {'RO':'11','AC':'12','AM':'13','RR':'14','PA':'15','AP':'16','TO':'17','MA':'21','PI':'22','CE':'23','RN':'24','PB':'25','PE':'26','AL':'27','SE':'28','BA':'29','MG':'31','ES':'32','RJ':'33','SP':'35','PR':'41','SC':'42','RS':'43','MS':'50','MT':'51','GO':'52','DF':'53'},
-        colors: {
-            'PT':'#ef4444','PL':'#1d4ed8','PSB':'#ef4444','PDT':'#f97316','UNIÃO':'#2563eb',
-            'PSDB':'#1e40af','MDB':'#16a34a','PSD':'#f59e0b','PP':'#0ea5e9','NOVO':'#f97316',
-            'REPUBLICANOS':'#0066cc','SOLIDARIEDADE':'#ff4500','DEFAULT':'#64748b'
+        /* SIDEBARS */
+        .sidebar {
+            position: absolute; top: 20px; bottom: 20px; z-index: 1000;
+            background: var(--panel-bg); backdrop-filter: blur(15px);
+            border: var(--border); border-radius: 16px;
+            display: flex; flex-direction: column; box-shadow: var(--shadow);
+            transition: transform 0.3s ease;
         }
-    };
+        .sidebar-left { left: 20px; width: 380px; }
+        .sidebar-right { right: 20px; width: 420px; }
 
-    let map;
-    let STATE = { 
-        fullData: null, 
-        currentTurn: null, 
-        active: new Set(), 
-        view: 'BRASIL', 
-        layers: { brazil: null, cities: null },
-        region: { id: null, name: 'Brasil' },
-        customColors: JSON.parse(localStorage.getItem('colorsV10')) || {}
-    };
+        /* COMPONENTES DA UI */
+        .header { padding: 24px; border-bottom: var(--border); }
+        .header h1 { font-size: 1.3rem; font-weight: 800; margin-bottom: 5px; display: flex; align-items: center; gap: 10px; }
+        .header p { font-size: 0.85rem; color: var(--text-muted); }
 
-    // --- INIT ---
-    window.onload = () => {
-        const ys = document.getElementById('yearSelect');
-        CONFIG.years.forEach(y => ys.add(new Option(y,y)));
-        ys.value = '2022';
-        Coloris.init();
-        initMap();
-        loadBrazilBase();
-    };
-
-    function initMap() {
-        map = L.map('map', { center:[-15.7,-47.8], zoom:4, zoomControl:false, background:'#09090b', preferCanvas:true });
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png').addTo(map);
-    }
-
-    // --- DATA LOGIC ---
-    function extractParty(name) { return name.match(/\((.*?)\)/)?.[1] || 'DEFAULT'; }
-    function getColor(name) {
-        const p = extractParty(name);
-        return STATE.customColors[p] || CONFIG.colors[p] || CONFIG.colors['DEFAULT'];
-    }
-
-    // CORE: Estatísticas por ID
-    function getStats(key, type) {
-        if(!STATE.currentTurn || !STATE.currentTurn[type]) return null;
-        const obj = STATE.currentTurn[type][key];
-        if(!obj) return null;
-
-        let max=-1, win=null, tot=0, ranking=[];
-        Object.entries(obj).forEach(([c, v]) => {
-            if(STATE.active.has(c)) {
-                tot += v;
-                if(v > max) { max = v; win = c; }
-                ranking.push({c, v});
-            }
-        });
-
-        if(!win || tot===0) return null;
-        ranking.sort((a,b) => b.v - a.v);
-
-        return {
-            winner: win, pct: (max/tot)*100, votes: max, total: tot,
-            party: extractParty(win), ranking: ranking
-        };
-    }
-
-    // --- LOAD ---
-    async function loadData() {
-        const year = document.getElementById('yearSelect').value;
-        const role = document.getElementById('roleSelect').value;
-        const turn = document.getElementById('turnSelect').value;
+        .controls { padding: 20px; border-bottom: var(--border); display: flex; flex-direction: column; gap: 12px; }
+        .row { display: flex; gap: 10px; }
+        label { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 4px; }
         
-        document.getElementById('loader').classList.remove('hidden');
+        select { width: 100%; padding: 12px; background: rgba(0,0,0,0.3); border: var(--border); color: #fff; border-radius: 8px; cursor: pointer; }
+        select:hover { border-color: var(--accent); }
 
-        try {
-            // Verifica se o arquivo existe antes
-            const res = await fetch(`data/${year}_${role}.json`);
-            if(!res.ok) throw new Error("Dados não encontrados para este ano/cargo.");
-            
-            STATE.fullData = await res.json();
-            
-            if(!STATE.fullData[turn]) {
-                alert(`Sem dados para o ${turn}º turno.`);
-                STATE.currentTurn = null;
-            } else {
-                STATE.currentTurn = STATE.fullData[turn];
-                renderSidebar();
-                
-                // Reaplica estilos
-                if(STATE.view==='BRASIL') updateLayer(STATE.layers.brazil);
-                else updateLayer(STATE.layers.cities);
-                
-                updateResults();
-            }
-        } catch(e) {
-            alert(e.message);
-        } finally {
-            // FIX: Sempre esconde o loader, mesmo com erro
-            document.getElementById('loader').classList.add('hidden');
+        .btn-action {
+            width: 100%; padding: 12px; background: var(--accent); border: none;
+            color: white; font-weight: 700; border-radius: 8px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: 0.2s;
         }
-    }
+        .btn-action:hover { filter: brightness(1.1); transform: translateY(-1px); }
 
-    function renderSidebar() {
-        const list = document.getElementById('candList');
-        list.innerHTML = '';
-        STATE.active.clear();
-
-        // Agrega Nacionalmente (Somando ESTADOS)
-        let total = {}, grandTotal = 0;
-        Object.values(STATE.currentTurn.estados).forEach(uf => {
-            Object.entries(uf).forEach(([c,v]) => {
-                total[c] = (total[c]||0) + v;
-                grandTotal += v;
-            });
-        });
-
-        Object.entries(total).sort((a,b)=>b[1]-a[1]).forEach(([c, v]) => {
-            STATE.active.add(c);
-            const pct = ((v/grandTotal)*100).toFixed(2);
-            const color = getColor(c);
-            const pName = extractParty(c);
-
-            const div = document.createElement('div');
-            div.className = 'cand-card';
-            div.innerHTML = `
-                <div class="cand-check checked" onclick="toggleCand(this, '${c}')">✓</div>
-                <div class="cand-color" style="background:${color}" onclick="openPicker(this, '${pName}')"></div>
-                <div class="cand-data">
-                    <div class="cand-top"><span class="cand-name">${c}</span><span class="cand-pct">${pct}%</span></div>
-                    <div class="cand-votes">${v.toLocaleString()} votos</div>
-                    <div class="prog-bg"><div class="prog-fill" style="width:${pct}%; background:${color}"></div></div>
-                </div>
-            `;
-            list.appendChild(div);
-        });
-    }
-
-    function toggleCand(el, c) {
-        window.event.stopPropagation();
-        if(STATE.active.has(c)) { STATE.active.delete(c); el.classList.remove('checked'); }
-        else { STATE.active.add(c); el.classList.add('checked'); }
-        
-        if(STATE.view==='BRASIL') updateLayer(STATE.layers.brazil);
-        else updateLayer(STATE.layers.cities);
-        updateResults();
-    }
-
-    function openPicker(el, party) {
-        window.event.stopPropagation();
-        el.dataset.coloris = "";
-        Coloris({
-            el: el, theme: 'polaroid', defaultColor: CONFIG.colors[party],
-            onChange: (c) => {
-                STATE.customColors[party] = c;
-                localStorage.setItem('colorsV10', JSON.stringify(STATE.customColors));
-                el.style.background = c;
-                updateLayer(STATE.layers.brazil);
-                updateLayer(STATE.layers.cities);
-                updateResults();
-            }
-        });
-        el.click();
-    }
-
-    // --- MAP STYLES ---
-    function style(feature) {
-        // Lógica de ID: Se Brasil, usa ID numérico do estado. Se Cidade, usa codarea IBGE 7 digitos
-        let key = STATE.view==='BRASIL' ? String(feature.properties.id) : String(feature.properties.codarea || feature.properties.id);
-        let type = STATE.view==='BRASIL' ? 'estados' : 'municipios';
-        
-        const s = getStats(key, type);
-        if(!s) return { fillColor:'#222', weight:1, color:'#333', fillOpacity:0.5 };
-        
-        const color = getColor(s.winner);
-        // Transparencia: >30% começa a aparecer, >80% é solido
-        const op = Math.max(0.3, Math.min(1, (s.pct-30)/50)); 
-        return { fillColor:color, weight:STATE.view==='BRASIL'?1.5:0.5, color:'#000', fillOpacity:op };
-    }
-
-    function updateLayer(l) { if(l) l.setStyle(style); }
-
-    function onEachFeature(f, l) {
-        l.on('click', () => {
-            if(STATE.view==='BRASIL') loadCities(f.properties.id, f.properties.name||f.properties.sigla);
-            else {
-                STATE.region = { id: String(f.properties.codarea||f.properties.id), name: f.properties.name };
-                document.getElementById('currentRegion').innerText = f.properties.name;
-                updateResults();
-            }
-        });
-        
-        l.bindTooltip(() => {
-            let key = STATE.view==='BRASIL' ? String(f.properties.id) : String(f.properties.codarea||f.properties.id);
-            let type = STATE.view==='BRASIL' ? 'estados' : 'municipios';
-            const s = getStats(key, type);
-            if(!s) return f.properties.name;
-            return `<b>${f.properties.name}</b><br>${s.winner}<br>${s.pct.toFixed(1)}%`;
-        }, {sticky:true, className:'leaflet-tooltip-own'});
-    }
-
-    // --- GEO LOADER ---
-    async function loadCities(ufId, name) {
-        document.getElementById('loader').classList.remove('hidden');
-        
-        // Tenta IBGE V3 Oficial
-        let url = `https://servicodados.ibge.gov.br/api/v3/malhas/estados/${ufId}/municipios?qualidade=minima&formato=application/vnd.geo+json`;
-        
-        try {
-            let res = await fetch(url);
-            if(!res.ok) throw new Error();
-            let geo = await res.json();
-            renderCities(geo, ufId, name);
-        } catch(e) {
-            console.warn("Fallback GitHub...");
-            try {
-                let res2 = await fetch(`https://raw.githubusercontent.com/tbrugz/geodata-br/master/geojson/geojs-${ufId}-mun.json`);
-                let geo2 = await res2.json();
-                geo2.features.forEach(f => { if(f.properties.id) f.properties.codarea = String(f.properties.id); });
-                renderCities(geo2, ufId, name);
-            } catch(e2) {
-                alert("Erro ao carregar mapa.");
-                resetToBrazil();
-            }
-        } finally {
-            document.getElementById('loader').classList.add('hidden');
+        /* LISTA */
+        .list-wrap { flex: 1; overflow-y: auto; padding: 10px; }
+        .cand-card {
+            background: rgba(255,255,255,0.03); border: var(--border);
+            border-radius: 10px; padding: 12px; margin-bottom: 8px;
+            display: flex; gap: 12px; align-items: center; cursor: pointer; transition: 0.2s;
         }
-    }
-
-    function renderCities(geo, id, name) {
-        if(STATE.layers.brazil) map.removeLayer(STATE.layers.brazil);
-        if(STATE.layers.cities) map.removeLayer(STATE.layers.cities);
+        .cand-card:hover { background: rgba(255,255,255,0.06); }
         
-        STATE.view = 'MUNICIPIOS';
-        STATE.layers.cities = L.geoJson(geo, { style:style, onEachFeature:onEachFeature }).addTo(map);
-        map.fitBounds(STATE.layers.cities.getBounds());
-        
-        document.getElementById('backBtn').style.display = 'flex';
-        STATE.region = { id: String(id), name: name, type: 'estado' }; // Guarda que estamos vendo um estado
-        document.getElementById('currentRegion').innerText = name;
-        updateResults();
-    }
-
-    function resetToBrazil() {
-        if(STATE.layers.cities) map.removeLayer(STATE.layers.cities);
-        loadBrazilBase();
-        STATE.view = 'BRASIL';
-        map.setView([-15.7,-47.8], 4);
-        document.getElementById('backBtn').style.display = 'none';
-        STATE.region = { id:null, name:'Brasil' };
-        document.getElementById('currentRegion').innerText = 'Brasil';
-        updateResults();
-    }
-
-    function loadBrazilBase() {
-        if(STATE.layers.brazil && !map.hasLayer(STATE.layers.brazil)) {
-            STATE.layers.brazil.addTo(map);
-            updateLayer(STATE.layers.brazil);
-            return;
+        .cand-check {
+            width: 20px; height: 20px; border-radius: 5px; border: 2px solid rgba(255,255,255,0.2);
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
+        .cand-check.checked { background: var(--accent); border-color: var(--accent); }
+        .cand-check.checked::after { content: '✓'; font-weight: 900; font-size: 12px; }
         
-        fetch('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson')
-        .then(r=>r.json()).then(d=>{
-            d.features.forEach(f => f.properties.id = CONFIG.ufIds[f.properties.sigla]);
-            STATE.layers.brazil = L.geoJson(d, {style:style, onEachFeature:onEachFeature}).addTo(map);
-            document.getElementById('loader').classList.add('hidden');
-        });
-    }
+        .cand-color { width: 30px; height: 30px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.1); flex-shrink: 0; }
+        .cand-data { flex: 1; min-width: 0; }
+        .cand-top { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .cand-name { font-weight: 700; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cand-pct { font-weight: 800; color: var(--accent); }
+        .prog-bar { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+        .prog-fill { height: 100%; transition: width 0.5s; }
 
-    // --- RESULTS PANEL ---
-    function updateResults() {
-        const div = document.getElementById('resultsBody');
-        const { id, type } = STATE.region;
-        
-        // Se estamos vendo cidades mas clicamos no titulo estado, mostramos estatistica do estado
-        let key = id, mode = STATE.view === 'BRASIL' ? 'estados' : 'municipios';
-        if(type === 'estado') mode = 'estados'; // Override se clicou no estado e carregou cidades
+        /* MAPA UI */
+        .map-ui { position: absolute; top: 20px; left: 420px; z-index: 1000; display: flex; gap: 10px; }
+        .ui-btn { width: 40px; height: 40px; background: var(--panel-bg); border: var(--border); color: #fff; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(10px); }
+        .ui-btn:hover { background: var(--accent); }
+        .back-btn { padding: 0 20px; width: auto; font-weight: 600; display: none; }
 
-        // Se Brasil (null id), usa agregacao simples para evitar crash (idealmente agregaria tudo)
-        if(!key) {
-             // Simplificado para Brasil: Poderia usar o 'total' do sidebar, mas aqui renderiza o gráfico
-             // Se não tiver chave, limpa
-             div.innerHTML = '<div class="empty"><i class="fas fa-chart-pie fa-2x"></i><br>Selecione um local</div>';
-             return;
-        }
+        .legend { position: absolute; bottom: 30px; left: 420px; z-index: 999; background: var(--panel-bg); padding: 15px; border-radius: 12px; border: var(--border); width: 220px; backdrop-filter: blur(10px); }
+        .grad { height: 8px; background: linear-gradient(90deg, rgba(255,255,255,0.1), #fff); margin: 8px 0; border-radius: 4px; }
 
-        const s = getStats(key, mode);
-        if(!s) {
-            div.innerHTML = '<div class="empty">Sem dados aqui.</div>';
-            return;
-        }
-
-        const winColor = getColor(s.winner);
-        div.innerHTML = `
-            <div class="stat-grid">
-                <div class="stat-box">
-                    <div class="stat-num">${s.total.toLocaleString()}</div>
-                    <div class="stat-lbl">Votos Totais</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-num" style="color:${winColor}">${s.pct.toFixed(1)}%</div>
-                    <div class="stat-lbl">Vencedor</div>
-                </div>
-            </div>
-            ${s.ranking.map(r => {
-                const c = getColor(r.c);
-                const pct = ((r.v/s.total)*100).toFixed(1);
-                return `
-                <div style="margin-bottom:12px">
-                    <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:4px">
-                        <span>${r.c.split('(')[0]}</span>
-                        <span>${pct}%</span>
-                    </div>
-                    <div class="prog-bg"><div class="prog-fill" style="width:${pct}%; background:${c}"></div></div>
-                </div>`;
-            }).join('')}
-        `;
-    }
-</script>
-</body>
-</html>
+        /* PAINEL DIREITA */
+        .results-body { padding: 20px; overflow-y: auto; flex: 1; }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .stat-box { background: rgba(255,255,255,0.03); border: var(--border); padding: 15px; border-radius:
