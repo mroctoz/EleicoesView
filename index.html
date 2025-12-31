@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Atlas Eleitoral - Final V11</title>
+    <title>Atlas Eleitoral - Dados Reais</title>
     
     <!-- 1. Leaflet (Mapa) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -444,7 +444,7 @@
     <div class="spinner"></div>
     <p style="margin-top:20px; font-size:0.9rem; letter-spacing:1px; text-align:center">
         ATLAS ELEITORAL<br>
-        <span style="font-size:0.8rem; color: #94a3b8">Carregando...</span>
+        <span style="font-size:0.8rem; color: #94a3b8">Inicializando...</span>
     </p>
     <button id="loaderBtn">Pular carregamento</button>
 </div>
@@ -495,7 +495,7 @@
                 </select>
             </div>
             <button class="btn-action" id="loadDataBtn">
-                <i class="fas fa-bolt"></i> CARREGAR MAPA
+                <i class="fas fa-bolt"></i> CARREGAR DADOS
             </button>
         </div>
         <div class="list-wrap" id="candList">
@@ -513,7 +513,7 @@
             <p id="currentRegionName">Brasil</p>
         </div>
         <div class="results-body" id="resultsBody">
-            <div class="empty"><i class="fas fa-mouse-pointer fa-2x"></i><br><br>Clique em "Carregar Mapa" para ver dados</div>
+            <div class="empty"><i class="fas fa-database fa-2x"></i><br><br>Clique em "Carregar Dados" para visualizar</div>
         </div>
     </aside>
 </div>
@@ -571,12 +571,12 @@
         // Inicializar mapa imediatamente
         initMap();
         
-        // Esconder loader após 2 segundos (máximo)
+        // Esconder loader após 3 segundos (máximo)
         setTimeout(() => {
             if (!document.getElementById('loader').classList.contains('hidden')) {
                 forceCloseLoader();
             }
-        }, 2000);
+        }, 3000);
     });
 
     // --- FUNÇÕES PRINCIPAIS ---
@@ -621,28 +621,30 @@
     function loadBrazilBase() {
         console.log('Carregando mapa do Brasil...');
         
-        // GeoJSON simplificado dos estados brasileiros (apenas contornos)
+        // GeoJSON simplificado dos estados brasileiros
         const brazilStatesGeoJSON = {
             "type": "FeatureCollection",
             "features": []
         };
         
-        // Adicionar alguns estados principais como exemplo
+        // Coordenadas aproximadas dos estados (simplificado)
         const estados = [
-            { sigla: "SP", name: "São Paulo", bounds: [[-53.1, -25.3], [-44.0, -19.8]] },
-            { sigla: "RJ", name: "Rio de Janeiro", bounds: [[-44.9, -23.8], [-40.9, -20.8]] },
-            { sigla: "MG", name: "Minas Gerais", bounds: [[-51.0, -22.9], [-39.5, -14.2]] },
-            { sigla: "RS", name: "Rio Grande do Sul", bounds: [[-57.6, -33.8], [-49.7, -27.1]] },
-            { sigla: "PR", name: "Paraná", bounds: [[-54.6, -26.6], [-48.0, -22.5]] },
-            { sigla: "SC", name: "Santa Catarina", bounds: [[-53.9, -29.3], [-48.6, -25.9]] },
-            { sigla: "BA", name: "Bahia", bounds: [[-46.8, -18.3], [-37.3, -9.4]] },
-            { sigla: "CE", name: "Ceará", bounds: [[-41.6, -7.9], [-37.4, -2.8]] },
-            { sigla: "PE", name: "Pernambuco", bounds: [[-41.8, -9.5], [-34.9, -7.1]] }
+            { sigla: "SP", name: "São Paulo", coords: [[[-53.1, -25.3], [-44.0, -19.8]]] },
+            { sigla: "RJ", name: "Rio de Janeiro", coords: [[[-44.9, -23.8], [-40.9, -20.8]]] },
+            { sigla: "MG", name: "Minas Gerais", coords: [[[-51.0, -22.9], [-39.5, -14.2]]] },
+            { sigla: "RS", name: "Rio Grande do Sul", coords: [[[-57.6, -33.8], [-49.7, -27.1]]] },
+            { sigla: "PR", name: "Paraná", coords: [[[-54.6, -26.6], [-48.0, -22.5]]] },
+            { sigla: "SC", name: "Santa Catarina", coords: [[[-53.9, -29.3], [-48.6, -25.9]]] },
+            { sigla: "BA", name: "Bahia", coords: [[[-46.8, -18.3], [-37.3, -9.4]]] },
+            { sigla: "CE", name: "Ceará", coords: [[[-41.6, -7.9], [-37.4, -2.8]]] },
+            { sigla: "PE", name: "Pernambuco", coords: [[[-41.8, -9.5], [-34.9, -7.1]]] },
+            { sigla: "GO", name: "Goiás", coords: [[[-53.0, -19.5], [-46.0, -13.5]]] },
+            { sigla: "AM", name: "Amazonas", coords: [[[-73.8, 1.4], [-56.0, -9.8]]] }
         ];
         
         // Criar features simplificadas (retângulos)
         estados.forEach(estado => {
-            const [sw, ne] = estado.bounds;
+            const [sw, ne] = estado.coords[0];
             const coordinates = [
                 [sw[1], sw[0]],
                 [sw[1], ne[0]],
@@ -681,8 +683,17 @@
             onEachFeature: function(feature, layer) {
                 layer.on('click', function() {
                     if (STATE.view === 'BRASIL') {
-                        // Simular clique para ver detalhes
-                        alert(`Clicou em ${feature.properties.name}\n\nPara ver municípios, execute o script completo no Colab e carregue os dados.`);
+                        // Atualizar região selecionada
+                        STATE.region = { 
+                            id: feature.properties.id, 
+                            name: feature.properties.name, 
+                            type: 'estado' 
+                        };
+                        document.getElementById('currentRegionName').textContent = feature.properties.name;
+                        updateResults();
+                        
+                        // Mostrar tooltip informativo
+                        layer.bindTooltip(`<b>${feature.properties.name}</b><br>Clique para detalhes`).openTooltip();
                     }
                 });
                 
@@ -721,62 +732,143 @@
         return STATE.customColors[party] || CONFIG.colors[party] || CONFIG.colors['DEFAULT'];
     }
 
-async function loadData() {
-    console.log('Carregando dados reais...');
-    
-    const year = document.getElementById('yearSelect').value;
-    const role = document.getElementById('roleSelect').value;
-    const turn = document.getElementById('turnSelect').value;
-    
-    // Mostrar loader
-    document.getElementById('loader').classList.remove('hidden');
-    
-    try {
-        // 1. Tentar carregar dados reais da pasta data/
+    // --- FUNÇÃO PRINCIPAL MODIFICADA PARA CARREGAR DADOS REAIS ---
+    async function loadData() {
+        console.log('Carregando dados reais...');
+        
+        const year = document.getElementById('yearSelect').value;
+        const role = document.getElementById('roleSelect').value;
+        const turn = document.getElementById('turnSelect').value;
         const fileName = `${year}_${role}.json`;
-        const response = await fetch(`data/${fileName}`);
         
-        if (!response.ok) {
-            throw new Error(`Arquivo não encontrado: data/${fileName}`);
+        // Mostrar loader
+        document.getElementById('loader').classList.remove('hidden');
+        document.getElementById('loadDataBtn').disabled = true;
+        
+        try {
+            // 1. Tentar carregar dados reais da pasta data/
+            console.log(`Tentando carregar: data/${fileName}`);
+            const response = await fetch(`data/${fileName}`);
+            
+            if (!response.ok) {
+                throw new Error(`Arquivo não encontrado: data/${fileName}`);
+            }
+            
+            // 2. Processar os dados
+            STATE.fullData = await response.json();
+            
+            // 3. Verificar se o turno existe nos dados
+            if (!STATE.fullData[turn]) {
+                throw new Error(`Turno ${turn} não encontrado nos dados.`);
+            }
+            
+            STATE.currentTurn = STATE.fullData[turn];
+            
+            // 4. Atualizar UI
+            renderSidebar();
+            updateLayer();
+            updateResults();
+            
+            // 5. Atualizar título
+            const cargoNome = role === 'president' ? 'Presidente' : 
+                             role === 'governor' ? 'Governador' : 'Senador';
+            document.getElementById('currentRegionName').textContent = 
+                `${year} - ${cargoNome} - ${turn}º Turno`;
+            
+            console.log(`✅ Dados carregados com sucesso: ${fileName} (Turno ${turn})`);
+            
+            // 6. Mostrar mensagem de sucesso
+            setTimeout(() => {
+                alert(`✅ Dados de ${year} carregados com sucesso!\n\nCargo: ${cargoNome}\nTurno: ${turn}º\nTotal de estados: ${Object.keys(STATE.currentTurn.estados).length}`);
+            }, 500);
+            
+        } catch (error) {
+            console.error('❌ Erro ao carregar dados reais:', error);
+            
+            // 7. Fallback para dados de demonstração
+            console.warn('Usando dados de demonstração como fallback...');
+            createDemoData(year, role, turn);
+            renderSidebar();
+            updateLayer();
+            updateResults();
+            
+            // 8. Mostrar alerta informativo
+            alert(`⚠️  ATENÇÃO: Dados reais não encontrados.\n\nUsando dados de demonstração.\n\nPara dados reais:\n1. Execute o script no Colab\n2. Baixe o arquivo .zip\n3. Extraia a pasta "dados_processados"\n4. RENOMEIE para "data" e coloque na mesma pasta deste HTML\n\nErro: ${error.message}`);
+            
+        } finally {
+            // 9. Restaurar UI
+            document.getElementById('loader').classList.add('hidden');
+            document.getElementById('loadDataBtn').disabled = false;
         }
+    }
+
+    function createDemoData(year, role, turn) {
+        // Dados de demonstração para quando não há dados reais
+        const demoCandidates = {
+            'president': [
+                { name: 'LULA (PT)', votes: 50000000, party: 'PT' },
+                { name: 'JAIR BOLSONARO (PL)', votes: 45000000, party: 'PL' },
+                { name: 'CIRO GOMES (PDT)', votes: 3000000, party: 'PDT' },
+                { name: 'SIMONE TEBET (MDB)', votes: 2000000, party: 'MDB' }
+            ],
+            'governor': [
+                { name: 'CANDIDATO A (PT)', votes: 8000000, party: 'PT' },
+                { name: 'CANDIDATO B (PSDB)', votes: 7000000, party: 'PSDB' },
+                { name: 'CANDIDATO C (MDB)', votes: 2000000, party: 'MDB' }
+            ],
+            'senator': [
+                { name: 'SENADOR A (PT)', votes: 9000000, party: 'PT' },
+                { name: 'SENADOR B (PSDB)', votes: 8500000, party: 'PSDB' },
+                { name: 'SENADOR C (PL)', votes: 3000000, party: 'PL' }
+            ]
+        };
         
-        STATE.fullData = await response.json();
+        const candidates = demoCandidates[role] || demoCandidates['president'];
         
-        // 2. Verificar se o turno existe nos dados
-        if (!STATE.fullData[turn]) {
-            throw new Error(`Turno ${turn} não encontrado nos dados.`);
-        }
+        // Criar estrutura de dados de demonstração
+        STATE.fullData = {
+            [turn]: {
+                estados: {},
+                municipios: {}
+            }
+        };
+        
+        // Preencher dados para estados
+        const estadosDemo = ['35', '33', '31', '41', '43', '42', '29', '23', '26']; // SP, RJ, MG, PR, RS, SC, BA, CE, PE
+        
+        estadosDemo.forEach(estadoId => {
+            STATE.fullData[turn].estados[estadoId] = {};
+            candidates.forEach(cand => {
+                // Variação de votos por estado
+                const variation = 0.7 + Math.random() * 0.6;
+                STATE.fullData[turn].estados[estadoId][cand.name] = 
+                    Math.round(cand.votes * variation / estadosDemo.length);
+            });
+        });
+        
+        // Dados para alguns municípios de exemplo
+        STATE.fullData[turn].municipios = {
+            '3550308': {}, // São Paulo-SP
+            '3304557': {}, // Rio de Janeiro-RJ
+            '3106200': {}  // Belo Horizonte-MG
+        };
+        
+        Object.keys(STATE.fullData[turn].municipios).forEach(municipioId => {
+            candidates.forEach(cand => {
+                STATE.fullData[turn].municipios[municipioId][cand.name] = 
+                    Math.round(cand.votes * 0.02 * (0.8 + Math.random() * 0.4));
+            });
+        });
         
         STATE.currentTurn = STATE.fullData[turn];
         
-        // 3. Atualizar UI com dados reais
-        renderSidebar();
-        updateLayer();
-        updateResults();
-        
-        console.log(`✅ Dados reais carregados: ${fileName} (Turno ${turn})`);
-        
-        // 4. Atualizar título da região atual
-        document.getElementById('currentRegionName').textContent = 
-            `${year} - ${role === 'president' ? 'Presidente' : role === 'governor' ? 'Governador' : 'Senador'}`;
-        
-    } catch (error) {
-        console.error('❌ Erro ao carregar dados reais:', error);
-        
-        // 5. Fallback para dados de demonstração se não encontrar arquivo
-        console.warn('Usando dados de demonstração...');
-        createDemoData(year, role, turn);
-        renderSidebar();
-        updateLayer();
-        updateResults();
-        
-        // 6. Mostrar mensagem informativa
-        alert(`⚠️  ATENÇÃO: Usando dados de demonstração.\n\nPara dados reais:\n1. Execute o script no Colab\n2. Baixe o arquivo .zip\n3. Extraia a pasta "dados_processados"\n4. Renomeie para "data" e coloque junto com este HTML\n\nErro: ${error.message}`);
-    } finally {
-        // Esconder loader
-        document.getElementById('loader').classList.add('hidden');
-    }
-}
+        // Configurar cores personalizadas para os partidos
+        candidates.forEach(cand => {
+            const party = cand.party;
+            if (CONFIG.colors[party] && !STATE.customColors[party]) {
+                STATE.customColors[party] = CONFIG.colors[party];
+            }
+        });
         
         localStorage.setItem('v11colors', JSON.stringify(STATE.customColors));
     }
@@ -791,7 +883,7 @@ async function loadData() {
             return;
         }
         
-        // Agregar votos totais
+        // Agregar votos totais de todos os estados
         let totalVotes = {};
         let grandTotal = 0;
         
@@ -802,15 +894,31 @@ async function loadData() {
             });
         });
         
-        // Ordenar por votos
+        // Ordenar por votos e limitar a 8 candidatos
         const sortedCandidates = Object.entries(totalVotes)
             .sort((a, b) => b[1] - a[1])
-            .slice(0, 6); // Mostrar apenas top 6
+            .slice(0, 8);
         
+        // Adicionar "Outros" se houver muitos candidatos
+        if (Object.keys(totalVotes).length > 8) {
+            let othersVotes = 0;
+            Object.entries(totalVotes)
+                .sort((a, b) => b[1] - a[1])
+                .slice(8)
+                .forEach(([_, votes]) => {
+                    othersVotes += votes;
+                });
+            
+            if (othersVotes > 0) {
+                sortedCandidates.push(['Outros (VARIOS)', othersVotes]);
+            }
+        }
+        
+        // Criar cards para cada candidato
         sortedCandidates.forEach(([candidate, votes]) => {
             STATE.active.add(candidate);
             
-            const percentage = ((votes / grandTotal) * 100).toFixed(2);
+            const percentage = grandTotal > 0 ? ((votes / grandTotal) * 100).toFixed(2) : "0.00";
             const color = getColor(candidate);
             const party = extractParty(candidate);
             
@@ -824,7 +932,7 @@ async function loadData() {
                         <span class="cand-name">${candidate}</span>
                         <span class="cand-pct">${percentage}%</span>
                     </div>
-                    <div class="cand-votes">${votes.toLocaleString()} votos</div>
+                    <div class="cand-votes">${votes.toLocaleString('pt-BR')} votos</div>
                     <div class="prog-bar">
                         <div class="prog-fill" style="width:${percentage}%; background:${color}"></div>
                     </div>
@@ -941,6 +1049,33 @@ async function loadData() {
                 fillOpacity: opacity
             };
         });
+        
+        // Atualizar tooltips
+        STATE.layers.brazil.eachLayer(function(layer) {
+            const stateId = layer.feature.properties.id;
+            
+            if (STATE.currentTurn && STATE.currentTurn.estados[stateId]) {
+                const stateData = STATE.currentTurn.estados[stateId];
+                let maxVotes = 0;
+                let winner = null;
+                let totalVotes = 0;
+                
+                Object.entries(stateData).forEach(([candidate, votes]) => {
+                    if (STATE.active.has(candidate)) {
+                        totalVotes += votes;
+                        if (votes > maxVotes) {
+                            maxVotes = votes;
+                            winner = candidate;
+                        }
+                    }
+                });
+                
+                if (winner && totalVotes > 0) {
+                    const percentage = ((maxVotes / totalVotes) * 100).toFixed(1);
+                    layer.bindTooltip(`<b>${layer.feature.properties.name}</b><br>${winner}<br>${percentage}%`);
+                }
+            }
+        });
     }
 
     function updateResults() {
@@ -951,17 +1086,28 @@ async function loadData() {
             resultsBody.innerHTML = `
                 <div class="empty">
                     <i class="fas fa-chart-pie fa-2x"></i><br><br>
-                    Clique em "CARREGAR MAPA"<br>para ver os dados eleitorais
+                    Clique em "CARREGAR DADOS"<br>para ver os dados eleitorais
                 </div>
             `;
             return;
         }
         
-        // Para demonstração, mostrar dados agregados do Brasil
+        // Determinar região atual
+        let dataSource = STATE.currentTurn.estados;
+        let regionTitle = 'Brasil (Total)';
+        
+        if (STATE.region.type === 'estado' && STATE.region.id) {
+            dataSource = { [STATE.region.id]: STATE.currentTurn.estados[STATE.region.id] };
+            regionTitle = STATE.region.name;
+        }
+        
+        // Calcular totais
         let totalVotes = {};
         let grandTotal = 0;
         
-        Object.values(STATE.currentTurn.estados).forEach(estado => {
+        Object.values(dataSource).forEach(estado => {
+            if (!estado) return;
+            
             Object.entries(estado).forEach(([candidate, votes]) => {
                 if (STATE.active.has(candidate)) {
                     totalVotes[candidate] = (totalVotes[candidate] || 0) + votes;
@@ -980,14 +1126,17 @@ async function loadData() {
             .sort((a, b) => b[1] - a[1]);
         
         const winner = sortedResults[0];
-        const winnerPercentage = ((winner[1] / grandTotal) * 100).toFixed(1);
+        const winnerPercentage = grandTotal > 0 ? ((winner[1] / grandTotal) * 100).toFixed(1) : "0.0";
         const winnerColor = getColor(winner[0]);
         
         // Gerar HTML dos resultados
         let resultsHTML = `
+            <div style="margin-bottom: 15px; font-size: 0.8rem; color: var(--text-muted); text-align: center;">
+                ${regionTitle}
+            </div>
             <div class="stat-grid">
                 <div class="stat-box">
-                    <div class="stat-num">${grandTotal.toLocaleString()}</div>
+                    <div class="stat-num">${grandTotal.toLocaleString('pt-BR')}</div>
                     <div class="stat-lbl">Votos Totais</div>
                 </div>
                 <div class="stat-box">
@@ -1006,7 +1155,7 @@ async function loadData() {
                 <div class="chart-row">
                     <div class="chart-head">
                         <span>${candidateName}</span>
-                        <span>${votes.toLocaleString()}</span>
+                        <span>${votes.toLocaleString('pt-BR')}</span>
                     </div>
                     <div class="chart-bg">
                         <div class="chart-bar" style="width:${percentage}%; background:${color}">
@@ -1018,7 +1167,6 @@ async function loadData() {
         });
         
         resultsBody.innerHTML = resultsHTML;
-        regionName.textContent = STATE.region.name;
     }
 
     // Inicializar Coloris (se disponível)
