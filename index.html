@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Atlas Eleitoral V11 - Simulador</title>
+    <title>Atlas Eleitoral V12 - Simulador</title>
     
     <!-- Leaflet & Dependências -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -22,7 +22,7 @@
             --bg-primary: #0a0c10;
             --bg-secondary: #151a23;
             --bg-tertiary: #1c2431;
-            --bg-card: rgba(28, 36, 49, 0.95);
+            --bg-card: rgba(28, 36, 49, 0.98); /* Mais opaco */
             --accent-blue: #3b82f6;
             --text-primary: #ffffff;
             --text-muted: #94a3b8;
@@ -41,17 +41,19 @@
         }
 
         #app { width: 100vw; height: 100vh; display: flex; position: relative; }
-        #map { flex: 1; height: 100%; background: var(--bg-primary); z-index: 1; }
+        
+        /* Mapa agora tem fundo cinza escuro para contraste com as cores opacas */
+        #map { flex: 1; height: 100%; background: #1a1a1a; z-index: 1; }
 
         .sidebar {
-            width: 400px;
+            width: 380px;
             background: var(--bg-card);
             backdrop-filter: blur(20px);
             display: flex; flex-direction: column;
             z-index: 1000; box-shadow: var(--shadow-lg);
             border-right: 1px solid var(--border-color);
         }
-        .sidebar-right { border-left: 1px solid var(--border-color); border-right: none; width: 450px; }
+        .sidebar-right { border-left: 1px solid var(--border-color); border-right: none; width: 420px; }
 
         .header {
             padding: 24px;
@@ -63,77 +65,88 @@
             background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
 
-        .controls { padding: 20px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); }
-        .controls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .controls { padding: 20px; background: var(--bg-secondary); flex: 1; }
+        .controls-grid { display: flex; flex-direction: column; gap: 15px; }
         
+        .control-group label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px; font-weight: 600; }
+
         select, button {
-            width: 100%; padding: 10px; border-radius: 8px;
+            width: 100%; padding: 12px; border-radius: 8px;
             border: 1px solid var(--border-color);
             background: rgba(255, 255, 255, 0.05);
-            color: white; font-family: inherit;
+            color: white; font-family: inherit; font-size: 0.9rem;
         }
-        button.btn-primary { background: var(--gradient-primary); border: none; font-weight: 700; cursor: pointer; }
+        button.btn-primary { background: var(--gradient-primary); border: none; font-weight: 700; cursor: pointer; margin-top: 10px; }
         button.btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
 
         .scroll-container { flex: 1; overflow-y: auto; padding: 15px; }
         
+        /* Estilo da Lista de Candidatos (Agora na Direita) */
         .cand-row {
-            display: flex; align-items: center; gap: 12px;
-            padding: 12px; margin-bottom: 8px;
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px; margin-bottom: 8px;
             background: rgba(255,255,255,0.03);
             border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 10px;
+            border-radius: 8px;
             transition: all 0.2s;
         }
-        .cand-row:hover { background: rgba(59, 130, 246, 0.1); border-color: var(--accent-blue); }
+        .cand-row:hover { background: rgba(255,255,255,0.06); }
         .cand-row.disabled { opacity: 0.5; filter: grayscale(1); }
 
-        /* Custom Checkbox */
         .cand-check {
-            width: 20px; height: 20px;
-            border: 2px solid var(--text-muted); border-radius: 5px;
+            width: 18px; height: 18px;
+            border: 2px solid var(--text-muted); border-radius: 4px;
             display: flex; align-items: center; justify-content: center;
-            cursor: pointer; flex-shrink: 0;
+            cursor: pointer; flex-shrink: 0; transition: all 0.2s;
         }
+        .cand-check:hover { border-color: white; }
         .cand-check.checked { background: var(--accent-blue); border-color: var(--accent-blue); }
-        .cand-check.checked::after { content: '✓'; font-size: 14px; font-weight: 900; }
+        .cand-check.checked::after { content: '✓'; font-size: 12px; font-weight: 900; color: white; }
 
-        .cand-color { width: 24px; height: 24px; border-radius: 6px; flex-shrink: 0; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); }
+        .cand-color { width: 18px; height: 18px; border-radius: 4px; flex-shrink: 0; cursor: pointer; border: 1px solid rgba(255,255,255,0.3); }
         .cand-info { flex: 1; min-width: 0; }
         
-        .progress-bar { height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-top: 6px; overflow: hidden; }
+        .cand-header { display: flex; justify-content: space-between; align-items: baseline; }
+        .cand-name { font-weight: 600; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+        .cand-pct { font-weight: 700; font-size: 0.9rem; color: var(--accent-blue); }
+        .cand-votes { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+
+        .progress-bar { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 6px; overflow: hidden; }
         .progress-fill { height: 100%; transition: width 0.5s ease; }
 
         .legend {
-            position: absolute; bottom: 30px; right: 480px;
-            background: rgba(10, 12, 16, 0.9); padding: 15px;
+            position: absolute; bottom: 30px; right: 450px;
+            background: rgba(10, 12, 16, 0.95); padding: 15px;
             border-radius: 12px; border: 1px solid var(--border-color);
             z-index: 999; backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         }
-        .legend-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; margin-bottom: 5px; width: 220px; }
-        .legend-item { height: 15px; border-radius: 2px; }
-        .legend-labels { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-muted); margin-top: 5px; }
+        .legend-grid { display: flex; gap: 0; margin-bottom: 5px; width: 220px; height: 20px; border-radius: 4px; overflow: hidden; border: 1px solid rgba(255,255,255,0.2); }
+        .legend-item { flex: 1; height: 100%; }
+        .legend-labels { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-muted); margin-top: 5px; font-weight: 600; }
 
         .map-controls {
-            position: absolute; top: 20px; right: 480px;
+            position: absolute; top: 20px; right: 450px;
             display: flex; flex-direction: column; gap: 8px; z-index: 999;
         }
         .map-btn {
             width: 40px; height: 40px; border-radius: 8px;
             background: rgba(10, 12, 16, 0.9); border: 1px solid var(--border-color);
             color: white; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem;
         }
+        .map-btn:hover { background: var(--accent-blue); border-color: var(--accent-blue); }
 
         .custom-tooltip {
-            background: rgba(10, 12, 16, 0.95); border: 1px solid var(--border-color);
+            background: rgba(10, 12, 16, 0.98); border: 1px solid var(--border-color);
             color: white; padding: 0; border-radius: 8px; font-family: 'Inter', sans-serif;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5); pointer-events: none;
         }
-        .tt-head { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: 700; background: rgba(59,130,246,0.2); border-radius: 8px 8px 0 0;}
-        .tt-body { padding: 10px; }
+        .tt-head { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: 700; background: linear-gradient(90deg, rgba(59,130,246,0.2), transparent); border-radius: 8px 8px 0 0;}
+        .tt-body { padding: 10px 12px; }
 
         #loader {
-            position: absolute; inset: 0; background: rgba(10,12,16,0.9);
+            position: absolute; inset: 0; background: rgba(10,12,16,0.95);
             z-index: 9999; display: flex; align-items: center; justify-content: center;
             flex-direction: column; transition: opacity 0.3s;
         }
@@ -154,66 +167,90 @@
 </div>
 
 <div id="app">
-    <!-- Sidebar Esquerda -->
+    <!-- Sidebar Esquerda: Apenas Filtros -->
     <aside class="sidebar">
         <div class="header">
-            <h1>Atlas Eleitoral V11</h1>
+            <h1>Atlas Eleitoral V12</h1>
             <div style="font-size: 0.8rem; color: var(--text-muted);">Simulador de Cenários</div>
         </div>
         
         <div class="controls">
             <div class="controls-grid">
-                <select id="yearSelect"><option value="2022">2022</option></select>
-                <select id="turnSelect">
-                    <option value="1">1º Turno</option>
-                    <option value="2">2º Turno</option>
-                </select>
-                <select id="roleSelect">
-                    <option value="president">Presidente</option>
-                    <option value="governor">Governador</option>
-                    <option value="senator">Senador</option>
-                </select>
+                <div class="control-group">
+                    <label>ANO</label>
+                    <select id="yearSelect"><option value="2022">2022</option></select>
+                </div>
+                <div class="control-group">
+                    <label>TURNO</label>
+                    <select id="turnSelect">
+                        <option value="1">1º Turno</option>
+                        <option value="2">2º Turno</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>CARGO</label>
+                    <select id="roleSelect">
+                        <option value="president">Presidente</option>
+                        <option value="governor">Governador</option>
+                        <option value="senator">Senador</option>
+                    </select>
+                </div>
                 <button class="btn-primary" onclick="app.loadData()">CARREGAR DADOS</button>
+                
+                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
+                
+                <button onclick="app.resetMap()" style="background: var(--bg-tertiary);">
+                    <i class="fas fa-globe-americas"></i> Visão Brasil
+                </button>
             </div>
-            <button onclick="app.resetMap()" style="background: var(--bg-tertiary); margin-top: 10px;">
-                <i class="fas fa-globe-americas"></i> Visão Brasil
-            </button>
         </div>
-
-        <div class="scroll-container" id="candList">
-            <!-- Lista de Candidatos -->
+        
+        <div style="padding: 20px; color: var(--text-muted); font-size: 0.8rem; text-align: center; border-top: 1px solid var(--border-color);">
+            <i class="fas fa-info-circle"></i><br>
+            Selecione uma região no mapa para ver detalhes. Use a barra direita para simular cenários.
         </div>
     </aside>
 
     <div id="map"></div>
 
-    <!-- Sidebar Direita -->
+    <!-- Sidebar Direita: Resultados e Controles -->
     <aside class="sidebar sidebar-right">
         <div class="header">
             <h2 id="regionName">Brasil</h2>
             <div style="font-size: 0.8rem; color: var(--accent-blue);" id="regionType">Resultado Simulado</div>
         </div>
+        
+        <!-- Totalizador -->
+        <div id="totalBox" style="padding: 15px 20px; background: rgba(59,130,246,0.1); border-bottom: 1px solid var(--border-color);">
+            <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Total de Votos (Ativos)</div>
+            <div id="totalVotesVal" style="font-size: 1.5rem; font-weight: 800; color: white;">-</div>
+        </div>
+
         <div class="scroll-container" id="resultsContainer">
-            <!-- Resultados -->
+            <!-- AQUI FICAM OS CANDIDATOS, CORES E CHECKBOXES -->
         </div>
     </aside>
 
     <div class="map-controls">
-        <div class="map-btn" onclick="app.map.zoomIn()">+</div>
-        <div class="map-btn" onclick="app.map.zoomOut()">-</div>
+        <div class="map-btn" onclick="app.map.zoomIn()" title="Zoom +">+</div>
+        <div class="map-btn" onclick="app.map.zoomOut()" title="Zoom -">-</div>
     </div>
 
-    <!-- Legenda Atualizada -->
+    <!-- Legenda Atualizada (Degraus Opacos) -->
     <div class="legend">
-        <div style="font-size: 0.8rem; margin-bottom: 5px; font-weight: 600;">Intensidade (Degraus de 10%)</div>
-        <div class="legend-grid" id="legendColors"></div>
+        <div style="font-size: 0.8rem; margin-bottom: 8px; font-weight: 700; color: white;">
+            Intensidade do Voto
+        </div>
+        <div class="legend-grid" id="legendColors">
+            <!-- Gerado via JS -->
+        </div>
         <div class="legend-labels">
             <span>0%</span>
             <span>50%</span>
             <span>100%</span>
         </div>
         <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 5px; text-align: center;">
-            Cor mais escura = Maior %
+            Cores sólidas (sem transparência)
         </div>
     </div>
 </div>
@@ -237,33 +274,34 @@ const app = {
     layers: { brazil: null, cities: null },
     data: { full: null, current: null },
     state: {
-        view: 'BRASIL', // 'BRASIL' ou 'MUNICIPIO'
-        selectedRegionId: null, // ID da região selecionada
+        view: 'BRASIL', 
+        selectedRegionId: null, 
         selectedRegionName: "Brasil",
-        ignoredCandidates: new Set(), // Candidatos desmarcados (simulação)
-        customColors: JSON.parse(localStorage.getItem('v11_colors') || '{}')
+        ignoredCandidates: new Set(),
+        customColors: JSON.parse(localStorage.getItem('v12_colors') || '{}')
     },
 
     init: () => {
         app.map = L.map('map', {
             center: [-15.7, -47.8], zoom: 4, zoomControl: false,
-            preferCanvas: true, background: '#0a0c10'
+            preferCanvas: true, background: '#1a1a1a'
         });
         
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OSM, &copy; CartoDB', maxZoom: 18, minZoom: 3
+            attribution: '', maxZoom: 18, minZoom: 3, opacity: 0.5
         }).addTo(app.map);
 
-        // Renderizar Legenda (Degraus)
+        // Renderizar Legenda (Degraus Opacos)
         const legendDiv = document.getElementById('legendColors');
-        const baseColor = [255, 255, 255]; // Usamos branco com opacidade para demonstrar a escala
+        // Exemplo com cor Neutra (Cinza) para a legenda
+        const baseLegendColor = "#ffffff"; 
         for(let i=0; i<10; i++) {
-            // Lógica inversa: quanto maior o index, mais escuro/opaco
-            // Mas para demonstração na legenda, usamos cor fixa cinza
-            const opacity = 0.1 + (i * 0.1); 
             const el = document.createElement('div');
             el.className = 'legend-item';
-            el.style.background = `rgba(200, 200, 200, ${opacity})`;
+            // Usa a mesma função de clarear que o mapa usa
+            // Degrau 0 = Muito claro, Degrau 9 = Cor Pura
+            // Passamos uma cor cinza médio para exemplificar
+            el.style.background = app.getSteppedColor('#666666', (i*10)+5);
             el.title = `${i*10}% - ${(i+1)*10}%`;
             legendDiv.appendChild(el);
         }
@@ -272,10 +310,44 @@ const app = {
         app.loadData();
     },
 
+    // --- LÓGICA DE CORES OPAQUE ---
+    // Mistura a cor com Branco baseada na porcentagem
+    getSteppedColor: (hexColor, pct) => {
+        // Degraus de 10 em 10
+        const step = Math.floor(pct / 10); // 0 a 9 (ou 10 se 100%)
+        
+        // Fator de mistura com branco (0 a 1)
+        // Se step 9 (90%+), factor = 0 (Cor pura)
+        // Se step 0 (0-10%), factor = 0.85 (Quase branco)
+        const whiteFactor = 0.85 - (step * (0.85 / 9));
+        
+        return app.mixWithWhite(hexColor, Math.max(0, whiteFactor));
+    },
+
+    mixWithWhite: (hex, amount) => {
+        let r = 0, g = 0, b = 0;
+        if (hex.length == 4) {
+            r = "0x" + hex[1] + hex[1];
+            g = "0x" + hex[2] + hex[2];
+            b = "0x" + hex[3] + hex[3];
+        } else if (hex.length == 7) {
+            r = "0x" + hex[1] + hex[2];
+            g = "0x" + hex[3] + hex[4];
+            b = "0x" + hex[5] + hex[6];
+        }
+        
+        // Mistura
+        r = Math.round(+r + (255 - +r) * amount);
+        g = Math.round(+g + (255 - +g) * amount);
+        b = Math.round(+b + (255 - +b) * amount);
+
+        return `rgb(${r}, ${g}, ${b})`;
+    },
+
     loadData: async () => {
         const loader = document.getElementById('loader');
         loader.classList.remove('hidden');
-        app.state.ignoredCandidates.clear(); // Reset simulação
+        app.state.ignoredCandidates.clear();
         
         const year = document.getElementById('yearSelect').value;
         const role = document.getElementById('roleSelect').value;
@@ -284,135 +356,153 @@ const app = {
         try {
             const response = await fetch(`data/${year}_${role}.json`);
             if(!response.ok) throw new Error("Arquivo não encontrado.");
-            
             const json = await response.json();
-            app.data.full = json;
             
             if(!json[turn]) {
                 alert("Turno indisponível.");
                 app.data.current = null;
             } else {
                 app.data.current = json[turn];
-                app.refreshAll(); // Renderiza tudo
+                app.refreshAll();
             }
         } catch (e) {
             console.error(e);
-            alert("Erro: Verifique se os dados existem na pasta 'data'.");
+            alert("Erro ao carregar dados. Verifique o console.");
         } finally {
             loader.classList.add('hidden');
         }
     },
 
-    // Recalcula estatísticas baseadas na Simulação (ignorando candidatos desmarcados)
     recalcStats: (votesObj) => {
         if(!votesObj) return null;
-        
-        let total = 0;
-        let maxVotes = -1;
-        let winner = null;
+        let total = 0, maxVotes = -1, winner = null;
         let ranking = [];
 
         Object.entries(votesObj).forEach(([cand, votes]) => {
+            // Se não estiver ignorado, conta
             if(!app.state.ignoredCandidates.has(cand)) {
                 total += votes;
                 ranking.push({ cand, votes });
-                if(votes > maxVotes) {
-                    maxVotes = votes;
-                    winner = cand;
-                }
+                if(votes > maxVotes) { maxVotes = votes; winner = cand; }
+            } else {
+                // Se estiver ignorado, adiciona com 0 votes para UI
+                ranking.push({ cand, votes: 0, ignored: true, originalVotes: votes });
             }
         });
 
-        if(total === 0) return null;
+        if(total === 0 && ranking.filter(r => !r.ignored).length === 0) return null;
         
-        // Ordena
-        ranking.sort((a,b) => b.votes - a.votes);
+        ranking.sort((a,b) => (b.ignored ? -1 : b.votes) - (a.ignored ? -1 : a.votes));
 
         return {
-            winner,
-            votes: maxVotes,
-            total,
-            pct: (maxVotes / total) * 100,
-            ranking: ranking.map(r => ({ ...r, pct: (r.votes / total) * 100 }))
+            winner, votes: maxVotes, total,
+            pct: total > 0 ? (maxVotes / total) * 100 : 0,
+            ranking: ranking.map(r => ({ 
+                ...r, 
+                pct: total > 0 && !r.ignored ? (r.votes / total) * 100 : 0 
+            }))
         };
     },
 
     refreshAll: () => {
-        app.renderSidebarLeft();
         app.updateMapStyle();
         app.updateSidebarRight();
     },
 
-    renderSidebarLeft: () => {
-        const listEl = document.getElementById('candList');
-        listEl.innerHTML = '';
+    // Essa função agora é o coração da UI (Barra Direita)
+    updateSidebarRight: () => {
+        const container = document.getElementById('resultsContainer');
+        const titleEl = document.getElementById('regionName');
+        const typeEl = document.getElementById('regionType');
+        const totalEl = document.getElementById('totalVotesVal');
         
-        if(!app.data.current) return;
+        container.innerHTML = '';
 
-        // Calcula total nacional REAL (incluindo Exterior/ZZ que está no JSON)
-        const totalVotesRaw = {};
-        
-        // Agrega tudo (Estados + Exterior/99)
-        Object.values(app.data.current.estados).forEach(state => {
-            Object.entries(state).forEach(([c, v]) => totalVotesRaw[c] = (totalVotesRaw[c] || 0) + v);
-        });
+        // Determinar Fonte de Dados
+        let rawVotes = {};
+        let regionTitle = "Brasil";
+        let regionType = "Nacional";
 
-        // Simulação: Calcula total FILTRADO
-        let totalActive = 0;
-        const ranking = [];
-        
-        Object.entries(totalVotesRaw).forEach(([cand, v]) => {
-            if(!app.state.ignoredCandidates.has(cand)) {
-                totalActive += v;
+        if(app.state.view === 'BRASIL' && !app.state.selectedRegionId) {
+            // Agregado Nacional
+            if(app.data.current) {
+                Object.values(app.data.current.estados).forEach(state => {
+                    Object.entries(state).forEach(([c, v]) => rawVotes[c] = (rawVotes[c] || 0) + v);
+                });
             }
-            ranking.push({ cand, votes: v }); // Mantém todos na lista para poder remarcar
-        });
-        
-        ranking.sort((a,b) => b.votes - a.votes);
+        } else {
+            // Regional
+            const scope = app.state.view === 'MUNICIPIO' ? 'municipios' : 'estados';
+            if(app.data.current) rawVotes = app.data.current[scope][app.state.selectedRegionId] || {};
+            regionTitle = app.state.selectedRegionName;
+            regionType = app.state.view === 'MUNICIPIO' ? "Município" : "Estado";
+        }
 
-        // Header Total
-        listEl.innerHTML += `
-            <div style="padding:10px; background:rgba(255,255,255,0.05); border-radius:8px; margin-bottom:15px; text-align:center;">
-                <div style="font-size:0.8rem; color:var(--text-muted)">TOTAL NACIONAL (SIMULADO)</div>
-                <div style="font-size:1.2rem; font-weight:800; color:white;">${totalActive.toLocaleString('pt-BR')}</div>
-            </div>
-        `;
+        titleEl.textContent = regionTitle;
+        typeEl.textContent = regionType;
 
-        ranking.forEach(item => {
-            const { name, party } = app.parseCandKey(item.cand);
+        // Calcular Estatísticas
+        // IMPORTANTE: Precisamos listar TODOS os candidatos relevantes, não só os que tiveram voto nesta cidade
+        // Para isso, pegamos a lista global de candidatos ativos no Brasil para garantir que todos apareçam na lista de controle
+        const allCandidates = new Set([...Object.keys(rawVotes)]);
+        // Adicionar candidatos que podem ter 0 votos aqui mas existem nacionalmente (para simulação)
+        // (Simplificação: usamos apenas os locais + ignorados globais para não poluir muito em cidades pequenas)
+        app.state.ignoredCandidates.forEach(c => allCandidates.add(c));
+
+        // Recriar objeto para o recalcStats
+        const cleanVotes = {};
+        allCandidates.forEach(c => cleanVotes[c] = rawVotes[c] || 0);
+
+        const stats = app.recalcStats(cleanVotes);
+
+        if(!stats) {
+            totalEl.textContent = "0";
+            container.innerHTML = '<div style="padding:20px;text-align:center;color:#666">Sem dados</div>';
+            return;
+        }
+
+        totalEl.textContent = stats.total.toLocaleString('pt-BR');
+
+        // Renderizar Lista
+        stats.ranking.forEach(r => {
+            const { name, party } = app.parseCandKey(r.cand);
             const color = app.getCandColor(party);
-            const isIgnored = app.state.ignoredCandidates.has(item.cand);
-            
-            // Se ignorado, pct é 0 visualmente ou baseado no total original?
-            // Vamos mostrar "-" se ignorado, ou recalcular se ativo
-            let pct = isIgnored ? 0 : (item.votes / totalActive * 100);
+            const isIgnored = r.ignored;
             
             const div = document.createElement('div');
             div.className = `cand-row ${isIgnored ? 'disabled' : ''}`;
+            
             div.innerHTML = `
                 <div class="cand-check ${isIgnored ? '' : 'checked'}"></div>
                 <div class="cand-color" style="background:${color}"></div>
                 <div class="cand-info">
                     <div class="cand-header">
-                        <span>${name}</span> 
-                        <span>${isIgnored ? '--' : pct.toFixed(2)+'%'}</span>
+                        <span class="cand-name" title="${name}">${name}</span>
+                        <span class="cand-pct">${isIgnored ? '--' : r.pct.toFixed(2)+'%'}</span>
                     </div>
-                    <div class="cand-sub">
-                        <span>${party}</span>
-                        <span>${item.votes.toLocaleString()}</span>
+                    <div class="cand-votes">
+                        ${party} • ${isIgnored ? (r.originalVotes||0).toLocaleString() + ' (orig)' : r.votes.toLocaleString()}
                     </div>
-                    ${!isIgnored ? `<div class="progress-bar"><div class="progress-fill" style="width:${pct}%; background:${color}"></div></div>` : ''}
+                    ${!isIgnored ? `
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width:${r.pct}%; background:${color}"></div>
+                        </div>
+                    ` : ''}
                 </div>
             `;
 
-            // Eventos
-            div.querySelector('.cand-check').onclick = () => app.toggleCandidate(item.cand);
+            // Evento Checkbox (Simulação)
+            div.querySelector('.cand-check').onclick = () => {
+                app.toggleCandidate(r.cand);
+            };
+
+            // Evento Color Picker
             div.querySelector('.cand-color').onclick = (e) => {
                 e.stopPropagation();
                 app.openColorPicker(party, color, e.target);
             };
 
-            listEl.appendChild(div);
+            container.appendChild(div);
         });
     },
 
@@ -425,91 +515,28 @@ const app = {
         app.refreshAll();
     },
 
-    updateSidebarRight: () => {
-        const container = document.getElementById('resultsContainer');
-        const titleEl = document.getElementById('regionName');
-        const typeEl = document.getElementById('regionType');
-        
-        container.innerHTML = '';
-
-        let stats = null;
-        
-        // Determina qual dado usar
-        if(app.state.view === 'BRASIL' && !app.state.selectedRegionId) {
-            // Usa agregado nacional
-            const totalVotes = {};
-            Object.values(app.data.current.estados).forEach(state => {
-                Object.entries(state).forEach(([c, v]) => totalVotes[c] = (totalVotes[c] || 0) + v);
-            });
-            stats = app.recalcStats(totalVotes);
-            titleEl.textContent = "Brasil";
-            typeEl.textContent = "Resultado Nacional (Simulado)";
-        } else {
-            // Usa dado regional (Estado ou Município)
-            const scope = app.state.view === 'MUNICIPIO' ? 'municipios' : 'estados';
-            const rawData = app.data.current[scope][app.state.selectedRegionId];
-            if(rawData) {
-                stats = app.recalcStats(rawData);
-                titleEl.textContent = app.state.selectedRegionName;
-                typeEl.textContent = app.state.view === 'MUNICIPIO' ? "Município" : "Estado";
-            }
-        }
-
-        if(!stats) {
-            container.innerHTML = '<div style="padding:20px;text-align:center;color:#666">Sem dados para exibição</div>';
-            return;
-        }
-
-        // Renderiza lista da direita
-        stats.ranking.forEach(r => {
-            const { name, party } = app.parseCandKey(r.cand);
-            const color = app.getCandColor(party);
-            
-            const div = document.createElement('div');
-            div.style.marginBottom = '12px';
-            div.innerHTML = `
-                <div style="display:flex; justify-content:space-between; font-weight:600; font-size:0.9rem; margin-bottom:4px;">
-                    <span>${name}</span>
-                    <span style="color:${color}">${r.pct.toFixed(2)}%</span>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width:${r.pct}%; background:${color}"></div>
-                </div>
-                <div style="text-align:right; font-size:0.75rem; color:var(--text-muted); margin-top:2px;">
-                    ${r.votes.toLocaleString()} votos
-                </div>
-            `;
-            container.appendChild(div);
-        });
-    },
-
     getStyle: (feature, scope = 'estados') => {
-        if(!app.data.current) return { fillColor: '#222', weight: 1, color: '#333' };
+        if(!app.data.current) return { fillColor: '#1a1a1a', weight: 1, color: '#333' };
 
         const id = feature.properties.id;
         const rawData = app.data.current[scope][id];
         const stats = app.recalcStats(rawData);
 
         if (!stats || !stats.winner) {
-            return { fillColor: '#1a1a1a', weight: 1, color: '#333', fillOpacity: 1 };
+            return { fillColor: '#222', weight: 1, color: '#333', fillOpacity: 1 };
         }
 
         const { party } = app.parseCandKey(stats.winner);
         const baseColor = app.getCandColor(party);
         
-        // LÓGICA DE DEGRAU SOLICITADA
-        // 40-49% = X, 50-59% = Y (Mais escuro)
-        // Criar steps de 10%
-        const step = Math.floor(stats.pct / 10); // 0 a 10
-        // Mapear step para opacidade (0.1 a 1.0)
-        // Quanto maior a %, maior a opacidade (cor mais viva/escura sobre fundo preto)
-        const opacity = Math.min(1, Math.max(0.1, step / 9)); 
+        // COR SÓLIDA baseada no Degrau
+        const finalColor = app.getSteppedColor(baseColor, stats.pct);
 
         return {
-            fillColor: baseColor,
-            weight: scope === 'estados' ? 1.5 : 0.5,
-            color: '#111',
-            fillOpacity: opacity
+            fillColor: finalColor,
+            weight: scope === 'estados' ? 1.2 : 0.5,
+            color: '#000', // Borda preta fina para separar regiões opacas
+            fillOpacity: 1 // TOTALMENTE OPACO
         };
     },
 
@@ -532,7 +559,7 @@ const app = {
                     app.state.selectedRegionId = feature.properties.id;
                     app.state.selectedRegionName = feature.properties.name;
                     app.loadCities(feature.properties.id, feature.properties.sigla);
-                    app.updateSidebarRight(); // Atualiza barra direita com dados do Estado
+                    app.updateSidebarRight();
                 });
                 app.bindTooltip(layer, feature.properties.id, 'estados', feature.properties.name);
             }
@@ -562,7 +589,7 @@ const app = {
                         L.DomEvent.stopPropagation(e);
                         app.state.selectedRegionId = feature.properties.id;
                         app.state.selectedRegionName = feature.properties.name;
-                        app.updateSidebarRight(); // Atualiza barra direita com dados da Cidade
+                        app.updateSidebarRight();
                     });
                     app.bindTooltip(layer, feature.properties.id, 'municipios', feature.properties.name);
                 }
@@ -590,7 +617,7 @@ const app = {
     bindTooltip: (layer, id, scope, name) => {
         layer.bindTooltip(() => {
             const rawData = app.data.current[scope][id];
-            const stats = app.recalcStats(rawData); // Usa stats recalculado
+            const stats = app.recalcStats(rawData);
             
             if(!stats) return "Sem dados";
             
@@ -620,13 +647,14 @@ const app = {
         if(app.layers.cities) app.layers.cities.setStyle((f) => app.getStyle(f, 'municipios'));
     },
 
-    // Helpers
     parseCandKey: (key) => {
         const match = key.match(/(.*?)\s*\((.*?)\)/);
         if(match) return { name: match[1], party: match[2] };
         return { name: key, party: 'DEFAULT' };
     },
+    
     getCandColor: (party) => app.state.customColors[party] || CONFIG.colors[party] || CONFIG.colors['DEFAULT'],
+    
     openColorPicker: (party, defaultColor, element) => {
         const pickr = Pickr.create({
             el: element, theme: 'nano', default: defaultColor,
@@ -636,7 +664,7 @@ const app = {
         pickr.on('save', (color) => {
             const hex = color.toHEXA().toString();
             app.state.customColors[party] = hex;
-            localStorage.setItem('v11_colors', JSON.stringify(app.state.customColors));
+            localStorage.setItem('v12_colors', JSON.stringify(app.state.customColors));
             element.style.background = hex;
             app.refreshAll();
             pickr.destroyAndRemove();
