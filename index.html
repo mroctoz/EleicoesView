@@ -721,96 +721,62 @@
         return STATE.customColors[party] || CONFIG.colors[party] || CONFIG.colors['DEFAULT'];
     }
 
-    async function loadData() {
-        console.log('Carregando dados...');
+async function loadData() {
+    console.log('Carregando dados reais...');
+    
+    const year = document.getElementById('yearSelect').value;
+    const role = document.getElementById('roleSelect').value;
+    const turn = document.getElementById('turnSelect').value;
+    
+    // Mostrar loader
+    document.getElementById('loader').classList.remove('hidden');
+    
+    try {
+        // 1. Tentar carregar dados reais da pasta data/
+        const fileName = `${year}_${role}.json`;
+        const response = await fetch(`data/${fileName}`);
         
-        const year = document.getElementById('yearSelect').value;
-        const role = document.getElementById('roleSelect').value;
-        const turn = document.getElementById('turnSelect').value;
-        
-        // Mostrar loader
-        document.getElementById('loader').classList.remove('hidden');
-        
-        try {
-            // Criar dados de demonstração (substituir por fetch real quando tiver dados)
-            createDemoData(year, role, turn);
-            
-            // Atualizar UI
-            renderSidebar();
-            updateLayer();
-            updateResults();
-            
-            alert(`Dados carregados para ${year} - ${role === 'president' ? 'Presidente' : role === 'governor' ? 'Governador' : 'Senador'}\n\nEstes são dados de demonstração. Para dados reais:\n1. Execute o script no Colab\n2. Baixe o arquivo .zip\n3. Extraia na pasta "data" junto com este HTML`);
-            
-        } catch (error) {
-            console.error('Erro ao carregar dados:', error);
-            alert('Erro ao carregar dados: ' + error.message);
-        } finally {
-            // Esconder loader
-            document.getElementById('loader').classList.add('hidden');
+        if (!response.ok) {
+            throw new Error(`Arquivo não encontrado: data/${fileName}`);
         }
-    }
-
-    function createDemoData(year, role, turn) {
-        // Dados de demonstração realistas para 2022
-        const demoCandidates = {
-            'president': [
-                { name: 'LULA (PT)', votes: 50000000, party: 'PT' },
-                { name: 'JAIR BOLSONARO (PL)', votes: 45000000, party: 'PL' },
-                { name: 'CIRO GOMES (PDT)', votes: 3000000, party: 'PDT' },
-                { name: 'SIMONE TEBET (MDB)', votes: 2000000, party: 'MDB' }
-            ],
-            'governor': [
-                { name: 'CANDIDATO A (PT)', votes: 8000000, party: 'PT' },
-                { name: 'CANDIDATO B (PSDB)', votes: 7000000, party: 'PSDB' },
-                { name: 'CANDIDATO C (MDB)', votes: 2000000, party: 'MDB' }
-            ],
-            'senator': [
-                { name: 'SENADOR A (PT)', votes: 9000000, party: 'PT' },
-                { name: 'SENADOR B (PSDB)', votes: 8500000, party: 'PSDB' },
-                { name: 'SENADOR C (PL)', votes: 3000000, party: 'PL' }
-            ]
-        };
         
-        const candidates = demoCandidates[role] || demoCandidates['president'];
+        STATE.fullData = await response.json();
         
-        // Criar estrutura de dados
-        STATE.fullData = {
-            [turn]: {
-                estados: {},
-                municipios: {}
-            }
-        };
-        
-        // Preencher dados para alguns estados
-        const estadosDemo = ['35', '33', '31', '41']; // SP, RJ, MG, PR
-        
-        estadosDemo.forEach(estadoId => {
-            STATE.fullData[turn].estados[estadoId] = {};
-            candidates.forEach(cand => {
-                // Variação de votos por estado
-                const variation = 0.8 + Math.random() * 0.4;
-                STATE.fullData[turn].estados[estadoId][cand.name] = 
-                    Math.round(cand.votes * variation / estadosDemo.length);
-            });
-        });
-        
-        // Dados para um município de exemplo
-        STATE.fullData[turn].municipios['3550308'] = {}; // São Paulo-SP
-        candidates.forEach(cand => {
-            STATE.fullData[turn].municipios['3550308'][cand.name] = 
-                Math.round(cand.votes * 0.05 * (0.9 + Math.random() * 0.2));
-        });
+        // 2. Verificar se o turno existe nos dados
+        if (!STATE.fullData[turn]) {
+            throw new Error(`Turno ${turn} não encontrado nos dados.`);
+        }
         
         STATE.currentTurn = STATE.fullData[turn];
         
-        // Configurar cores personalizadas para os partidos
-        candidates.forEach(cand => {
-            const party = cand.party;
-            if (CONFIG.colors[party] && !STATE.customColors[party]) {
-                STATE.customColors[party] = CONFIG.colors[party];
-            }
-        });
+        // 3. Atualizar UI com dados reais
+        renderSidebar();
+        updateLayer();
+        updateResults();
+        
+        console.log(`✅ Dados reais carregados: ${fileName} (Turno ${turn})`);
+        
+        // 4. Atualizar título da região atual
+        document.getElementById('currentRegionName').textContent = 
+            `${year} - ${role === 'president' ? 'Presidente' : role === 'governor' ? 'Governador' : 'Senador'}`;
+        
+    } catch (error) {
+        console.error('❌ Erro ao carregar dados reais:', error);
+        
+        // 5. Fallback para dados de demonstração se não encontrar arquivo
+        console.warn('Usando dados de demonstração...');
+        createDemoData(year, role, turn);
+        renderSidebar();
+        updateLayer();
+        updateResults();
+        
+        // 6. Mostrar mensagem informativa
+        alert(`⚠️  ATENÇÃO: Usando dados de demonstração.\n\nPara dados reais:\n1. Execute o script no Colab\n2. Baixe o arquivo .zip\n3. Extraia a pasta "dados_processados"\n4. Renomeie para "data" e coloque junto com este HTML\n\nErro: ${error.message}`);
+    } finally {
+        // Esconder loader
+        document.getElementById('loader').classList.add('hidden');
+    }
+}
         
         localStorage.setItem('v11colors', JSON.stringify(STATE.customColors));
     }
