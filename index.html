@@ -3,172 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Atlas Eleitoral - Final V11</title>
+    <title>Atlas Eleitoral V10 - Ultimate</title>
     
-    <!-- 1. Leaflet (Mapa) -->
+    <!-- Bibliotecas -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
-    <!-- 2. Fontes e Ícones -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    
-    <!-- 3. Coloris (Color Picker) - Versão estável -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/mdbassit/Coloris@latest/dist/coloris.min.css"/>
-    <script src="https://cdn.jsdelivr.net/gh/mdbassit/Coloris@latest/dist/coloris.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/coloris@latest/dist/coloris.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/coloris@latest/dist/coloris.min.js"></script>
 
     <style>
-        /* --- DESIGN SYSTEM (PREMIUM DARK) --- */
         :root {
             --bg-dark: #09090b;
-            --panel-bg: rgba(22, 27, 34, 0.95);
-            --border: 1px solid rgba(255, 255, 255, 0.1);
+            --panel-bg: rgba(24, 24, 27, 0.85); /* Vidro escuro */
+            --border: 1px solid rgba(255, 255, 255, 0.08);
             --accent: #3b82f6;
-            --text-main: #ffffff;
-            --text-muted: #94a3b8;
-            --shadow: 0 20px 40px rgba(0,0,0,0.6);
+            --text-primary: #f4f4f5;
+            --text-secondary: #a1a1aa;
+            --font: 'Inter', sans-serif;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg-dark); color: var(--text-main); overflow: hidden; height: 100vh; }
-        #app { width: 100vw; height: 100vh; position: relative; }
+        
+        body { font-family: var(--font); background: var(--bg-dark); color: var(--text-primary); overflow: hidden; height: 100vh; }
+        
+        #app { width: 100%; height: 100%; position: relative; }
         #map { width: 100%; height: 100%; z-index: 1; background: var(--bg-dark); }
 
-        /* LOADER (COM BOTÃO DE SEGURANÇA) */
-        #loader {
-            position: absolute; inset: 0; background: var(--bg-dark); z-index: 9999;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: opacity 0.5s ease;
+        /* --- SIDEBARS (UI LINDA) --- */
+        .sidebar {
+            position: absolute; top: 24px; bottom: 24px; z-index: 1000;
+            background: var(--panel-bg); backdrop-filter: blur(20px);
+            border: var(--border); border-radius: 16px;
+            display: flex; flex-direction: column;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            transition: all 0.3s ease;
         }
-        .spinner { width: 50px; height: 50px; border: 3px solid rgba(59,130,246,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s infinite linear; }
+        
+        .sidebar-left { left: 24px; width: 380px; }
+        .sidebar-right { right: 24px; width: 400px; }
+
+        .header { padding: 24px; border-bottom: var(--border); }
+        .header h1 { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 4px; display: flex; align-items: center; gap: 10px; }
+        .header p { font-size: 0.8rem; color: var(--text-secondary); font-weight: 500; }
+
+        .controls { padding: 20px; border-bottom: var(--border); display: flex; flex-direction: column; gap: 12px; }
+        .control-row { display: flex; gap: 10px; }
+        
+        select {
+            width: 100%; padding: 12px; background: rgba(255,255,255,0.03);
+            border: var(--border); color: #fff; border-radius: 8px;
+            font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: 0.2s;
+        }
+        select:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.2); }
+
+        .btn-load {
+            width: 100%; padding: 12px; background: var(--accent);
+            border: none; color: white; font-weight: 700; border-radius: 8px;
+            cursor: pointer; transition: transform 0.1s, filter 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-load:hover { filter: brightness(1.1); }
+        .btn-load:active { transform: scale(0.98); }
+
+        /* LISTA DE CANDIDATOS */
+        .list-wrap { flex: 1; overflow-y: auto; padding: 10px; }
+        
+        .cand-card {
+            background: rgba(255,255,255,0.02); border: var(--border);
+            border-radius: 10px; padding: 14px; margin-bottom: 8px;
+            display: flex; gap: 12px; align-items: center;
+            cursor: pointer; transition: 0.2s;
+        }
+        .cand-card:hover { background: rgba(255,255,255,0.05); }
+        
+        .cand-check {
+            width: 20px; height: 20px; border-radius: 6px;
+            border: 2px solid rgba(255,255,255,0.2); flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .cand-check.checked { background: var(--accent); border-color: var(--accent); }
+        .cand-check.checked::after { content: '✓'; font-size: 12px; font-weight: 900; }
+
+        .cand-color {
+            width: 32px; height: 32px; border-radius: 8px;
+            border: 2px solid rgba(255,255,255,0.1); flex-shrink: 0;
+            transition: transform 0.2s;
+        }
+        .cand-color:hover { transform: scale(1.1); border-color: #fff; }
+
+        .cand-data { flex: 1; min-width: 0; }
+        .cand-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+        .cand-name { font-weight: 700; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cand-pct { font-weight: 800; color: var(--accent); }
+        .cand-votes { font-size: 0.75rem; color: var(--text-secondary); }
+        
+        .prog-bg { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+        .prog-fill { height: 100%; transition: width 0.6s ease; }
+
+        /* PAINEL DIREITO */
+        .results-content { padding: 20px; overflow-y: auto; flex: 1; }
+        .region-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 6px 12px; background: rgba(59,130,246,0.15);
+            border: 1px solid rgba(59,130,246,0.3); border-radius: 20px;
+            color: #60a5fa; font-size: 0.8rem; font-weight: 600;
+        }
+
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .stat-box { 
+            background: rgba(255,255,255,0.03); border: var(--border);
+            padding: 15px; border-radius: 10px; text-align: center;
+        }
+        .stat-num { font-size: 1.4rem; font-weight: 800; color: #fff; }
+        .stat-lbl { font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
+
+        /* MAP CONTROLS */
+        .map-ui { position: absolute; top: 24px; left: 420px; z-index: 1000; display: flex; gap: 10px; }
+        .ui-btn {
+            width: 40px; height: 40px; background: var(--panel-bg);
+            border: var(--border); color: #fff; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; backdrop-filter: blur(10px); transition: 0.2s;
+        }
+        .ui-btn:hover { background: var(--accent); border-color: var(--accent); }
+        
+        .back-btn { padding: 0 20px; width: auto; font-weight: 600; font-size: 0.85rem; display: none; }
+
+        .legend {
+            position: absolute; bottom: 30px; left: 420px; z-index: 999;
+            background: var(--panel-bg); padding: 15px; border-radius: 12px;
+            border: var(--border); width: 200px; backdrop-filter: blur(10px);
+        }
+        .grad { height: 8px; background: linear-gradient(90deg, rgba(255,255,255,0.1), #fff); border-radius: 4px; margin: 8px 0; }
+
+        /* LOADING */
+        #loader {
+            position: absolute; inset: 0; background: var(--bg-dark); z-index: 2000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.4s ease;
+        }
+        .spinner { width: 40px; height: 40px; border: 3px solid rgba(59,130,246,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s infinite linear; }
         @keyframes spin { to {transform: rotate(360deg);} }
         .hidden { opacity: 0; pointer-events: none; }
         
-        #loaderBtn { margin-top: 20px; padding: 10px 20px; border: 1px solid #444; background: transparent; color: #888; border-radius: 5px; cursor: pointer; display: none; }
-        #loaderBtn:hover { color: #fff; border-color: #fff; }
-
-        /* SIDEBARS */
-        .sidebar {
-            position: absolute; top: 20px; bottom: 20px; z-index: 1000;
-            background: var(--panel-bg); backdrop-filter: blur(15px);
-            border: var(--border); border-radius: 16px;
-            display: flex; flex-direction: column; box-shadow: var(--shadow);
-            transition: transform 0.3s ease;
-        }
-        .sidebar-left { left: 20px; width: 380px; }
-        .sidebar-right { right: 20px; width: 400px; }
-
-        /* HEADER */
-        .header { padding: 24px; border-bottom: var(--border); }
-        .header h1 { font-size: 1.3rem; font-weight: 800; margin-bottom: 5px; display: flex; align-items: center; gap: 10px; }
-        .header p { font-size: 0.85rem; color: var(--text-muted); }
-
-        /* CONTROLS */
-        .controls { padding: 20px; border-bottom: var(--border); display: flex; flex-direction: column; gap: 12px; }
-        .row { display: flex; gap: 10px; }
-        label { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 4px; }
-        
-        select { width: 100%; padding: 12px; background: rgba(0,0,0,0.3); border: var(--border); color: #fff; border-radius: 8px; cursor: pointer; }
-        select:hover { border-color: var(--accent); }
-
-        .btn-action {
-            width: 100%; padding: 12px; background: var(--accent); border: none;
-            color: white; font-weight: 700; border-radius: 8px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            transition: 0.2s;
-        }
-        .btn-action:hover { filter: brightness(1.1); transform: translateY(-1px); }
-
-        /* LISTA */
-        .list-wrap { flex: 1; overflow-y: auto; padding: 10px; }
-        .cand-card {
-            background: rgba(255,255,255,0.03); border: var(--border);
-            border-radius: 10px; padding: 12px; margin-bottom: 8px;
-            display: flex; gap: 12px; align-items: center; cursor: pointer; transition: 0.2s;
-        }
-        .cand-card:hover { background: rgba(255,255,255,0.06); }
-        
-        .cand-check {
-            width: 20px; height: 20px; border-radius: 5px; border: 2px solid rgba(255,255,255,0.2);
-            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-        }
-        .cand-check.checked { background: var(--accent); border-color: var(--accent); }
-        .cand-check.checked::after { content: '✓'; font-weight: 900; font-size: 12px; }
-        
-        .cand-color { width: 30px; height: 30px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.1); flex-shrink: 0; }
-        
-        .cand-data { flex: 1; min-width: 0; }
-        .cand-top { display: flex; justify-content: space-between; margin-bottom: 4px; }
-        .cand-name { font-weight: 700; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .cand-pct { font-weight: 800; color: var(--accent); }
-        .cand-votes { font-size: 0.75rem; color: var(--text-muted); }
-        
-        .prog-bar { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; margin-top: 6px; }
-        .prog-fill { height: 100%; transition: width 0.5s; }
-
-        /* MAP UI */
-        .map-ui { position: absolute; top: 20px; left: 420px; z-index: 1000; display: flex; gap: 10px; }
-        .ui-btn { width: 40px; height: 40px; background: var(--panel-bg); border: var(--border); color: #fff; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(10px); }
-        .ui-btn:hover { background: var(--accent); }
-        .back-btn { padding: 0 20px; width: auto; font-weight: 600; display: none; }
-
-        .legend { position: absolute; bottom: 30px; left: 420px; z-index: 999; background: var(--panel-bg); padding: 15px; border-radius: 12px; border: var(--border); width: 220px; backdrop-filter: blur(10px); }
-        .grad { height: 8px; background: linear-gradient(90deg, rgba(255,255,255,0.1), #fff); margin: 8px 0; border-radius: 4px; }
-
-        /* PAINEL DIREITA (CSS que faltava) */
-        .results-body { padding: 20px; overflow-y: auto; flex: 1; }
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .stat-box { background: rgba(255,255,255,0.03); border: var(--border); padding: 15px; border-radius: 10px; text-align: center; }
-        .stat-num { font-size: 1.2rem; font-weight: 800; color: #fff; margin-bottom: 4px; }
-        .stat-lbl { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-        
-        .chart-row { margin-bottom: 10px; }
-        .chart-head { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px; }
-        .chart-bg { height: 24px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; position: relative; }
-        .chart-bar { height: 100%; display: flex; align-items: center; padding-left: 8px; font-weight: 700; font-size: 0.75rem; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
-
-        .empty { text-align: center; color: var(--text-muted); margin-top: 40px; opacity: 0.6; }
-        
-        /* Tooltip */
-        .leaflet-tooltip-own { background: rgba(10,12,16,0.95)!important; border: 1px solid #444!important; color:#fff!important; border-radius:6px!important; padding:0!important; }
-        .tt-h { padding:10px; border-bottom:1px solid #444; font-weight:700; background:rgba(255,255,255,0.05); }
-        .tt-b { padding:10px; }
-        .tt-r { display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:4px; gap:15px; }
+        .empty { text-align: center; color: var(--text-secondary); margin-top: 40px; opacity: 0.6; }
     </style>
 </head>
 <body>
 
 <div id="loader">
     <div class="spinner"></div>
-    <p style="margin-top:20px; font-size:0.9rem; letter-spacing:1px">INICIANDO ATLAS ELEITORAL...</p>
-    <button id="loaderBtn" onclick="forceCloseLoader()">Pular carregamento</button>
+    <p style="margin-top:20px; font-size:0.9rem; letter-spacing:1px">CARREGANDO BASE DE DADOS...</p>
 </div>
 
 <div id="app">
-    <!-- MAP CONTROLS -->
+    <!-- MAP UI -->
     <div class="map-ui">
-        <button class="ui-btn back-btn" id="backBtn" onclick="resetToBrazil()"><i class="fas fa-arrow-left"></i> Brasil</button>
+        <button class="ui-btn back-btn" id="backBtn" onclick="resetToBrazil()">
+            <i class="fas fa-arrow-left" style="margin-right:8px"></i> Brasil
+        </button>
         <button class="ui-btn" onclick="map.zoomIn()"><i class="fas fa-plus"></i></button>
         <button class="ui-btn" onclick="map.zoomOut()"><i class="fas fa-minus"></i></button>
     </div>
 
-    <!-- LEGEND -->
     <div class="legend">
         <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:700; color:#aaa">
             <span>DISPUTADO</span><span>DOMINANTE</span>
         </div>
         <div class="grad"></div>
-        <div style="text-align:center; font-size:0.65rem; color:#666; margin-top:4px">INTENSIDADE DO VOTO</div>
     </div>
 
-    <!-- SIDEBAR LEFT -->
+    <!-- SIDEBAR 1 -->
     <aside class="sidebar sidebar-left">
         <div class="header">
             <h1><i class="fas fa-vote-yea" style="color:var(--accent)"></i> Atlas Eleitoral</h1>
-            <p>Dados Oficiais TSE - 1994 a 2022</p>
+            <p>Visualização Oficial de Dados do TSE</p>
         </div>
         <div class="controls">
-            <div class="row">
+            <div class="control-row">
                 <div style="flex:1">
                     <label>Ano</label>
                     <select id="yearSelect"></select>
@@ -189,8 +203,8 @@
                     <option value="senator">Senador</option>
                 </select>
             </div>
-            <button class="btn-action" onclick="loadData()">
-                <i class="fas fa-bolt"></i> CARREGAR MAPA
+            <button class="btn-load" onclick="loadData()">
+                <i class="fas fa-bolt"></i> ATUALIZAR MAPA
             </button>
         </div>
         <div class="list-wrap" id="candList">
@@ -198,17 +212,17 @@
         </div>
     </aside>
 
-    <!-- MAP CONTAINER -->
+    <!-- MAP -->
     <div id="map"></div>
 
-    <!-- SIDEBAR RIGHT -->
+    <!-- SIDEBAR 2 -->
     <aside class="sidebar sidebar-right">
         <div class="header">
             <h1>Resultados</h1>
-            <p id="currentRegionName">Brasil</p>
+            <div class="region-badge" id="currentRegion">Brasil</div>
         </div>
-        <div class="results-body" id="resultsBody">
-            <div class="empty"><i class="fas fa-mouse-pointer fa-2x"></i><br><br>Clique no mapa para detalhes.</div>
+        <div class="results-content" id="resultsBody">
+            <div class="empty"><i class="fas fa-mouse-pointer fa-2x"></i><br><br>Clique no mapa.</div>
         </div>
     </aside>
 </div>
@@ -232,61 +246,23 @@
         active: new Set(), 
         view: 'BRASIL', 
         layers: { brazil: null, cities: null },
-        region: { id: null, name: 'Brasil', type: 'brasil' },
-        customColors: JSON.parse(localStorage.getItem('v11colors')) || {}
+        region: { id: null, name: 'Brasil' },
+        customColors: JSON.parse(localStorage.getItem('colorsV10')) || {}
     };
-
-    // --- SAFETY LOADER ---
-    setTimeout(() => { document.getElementById('loaderBtn').style.display = 'block'; }, 3000);
-    function forceCloseLoader() { 
-        document.getElementById('loader').classList.add('hidden'); 
-        initApp();
-    }
 
     // --- INIT ---
     window.onload = () => {
         const ys = document.getElementById('yearSelect');
-        CONFIG.years.forEach(y => ys.add(new Option(y, y)));
+        CONFIG.years.forEach(y => ys.add(new Option(y,y)));
         ys.value = '2022';
-        
-        // Verifica se Coloris carregou
-        if(typeof Coloris !== 'undefined') Coloris.init();
-        
+        Coloris.init();
         initMap();
         loadBrazilBase();
-        
-        // Auto-esconder loader após 5 segundos máximo
-        setTimeout(() => {
-            document.getElementById('loader').classList.add('hidden');
-            initApp();
-        }, 5000);
     };
 
     function initMap() {
-        map = L.map('map', { 
-            center:[-15.7,-47.8], 
-            zoom:4, 
-            zoomControl:false, 
-            background:'#09090b', 
-            preferCanvas:true,
-            renderer: L.canvas()
-        });
-        
-        // Adicionar tile layer com fallback
-        try {
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
-                maxZoom: 19,
-                attribution: '© OpenStreetMap'
-            }).addTo(map);
-        } catch(e) {
-            console.warn("Tile layer falhou, usando fallback");
-        }
-    }
-
-    function initApp() {
-        // Atualizar UI básica
-        document.getElementById('currentRegionName').innerText = 'Brasil';
-        updateResults();
+        map = L.map('map', { center:[-15.7,-47.8], zoom:4, zoomControl:false, background:'#09090b', preferCanvas:true });
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png').addTo(map);
     }
 
     // --- DATA LOGIC ---
@@ -296,15 +272,13 @@
         return STATE.customColors[p] || CONFIG.colors[p] || CONFIG.colors['DEFAULT'];
     }
 
-    // ESTATÍSTICAS POR ID
+    // CORE: Estatísticas por ID
     function getStats(key, type) {
-        // key = "35" (SP) ou "3550308" (SP Capital)
-        if (!STATE.currentTurn || !STATE.currentTurn[type]) return null;
+        if(!STATE.currentTurn || !STATE.currentTurn[type]) return null;
         const obj = STATE.currentTurn[type][key];
-        if (!obj) return null;
+        if(!obj) return null;
 
         let max=-1, win=null, tot=0, ranking=[];
-        
         Object.entries(obj).forEach(([c, v]) => {
             if(STATE.active.has(c)) {
                 tot += v;
@@ -322,7 +296,7 @@
         };
     }
 
-    // --- LOADING ---
+    // --- LOAD ---
     async function loadData() {
         const year = document.getElementById('yearSelect').value;
         const role = document.getElementById('roleSelect').value;
@@ -331,80 +305,31 @@
         document.getElementById('loader').classList.remove('hidden');
 
         try {
-            // Verificar se temos dados para este ano/cargo
-            if (!STATE.fullData) {
-                // Criar dados dummy para demonstração
-                createDemoData();
-            }
+            // Verifica se o arquivo existe antes
+            const res = await fetch(`data/${year}_${role}.json`);
+            if(!res.ok) throw new Error("Dados não encontrados para este ano/cargo.");
+            
+            STATE.fullData = await res.json();
             
             if(!STATE.fullData[turn]) {
-                alert(`Turno ${turn} não disponível.`);
+                alert(`Sem dados para o ${turn}º turno.`);
                 STATE.currentTurn = null;
             } else {
                 STATE.currentTurn = STATE.fullData[turn];
                 renderSidebar();
                 
+                // Reaplica estilos
                 if(STATE.view==='BRASIL') updateLayer(STATE.layers.brazil);
                 else updateLayer(STATE.layers.cities);
                 
                 updateResults();
             }
         } catch(e) {
-            alert("Erro: " + e.message + "\n\nUse o script do Colab para gerar dados reais.");
-            console.error(e);
+            alert(e.message);
         } finally {
+            // FIX: Sempre esconde o loader, mesmo com erro
             document.getElementById('loader').classList.add('hidden');
         }
-    }
-
-    function createDemoData() {
-        // Criar dados de demonstração para evitar erro de JSON não encontrado
-        STATE.fullData = {
-            "1": {
-                "estados": {
-                    "35": {
-                        "LULA (PT)": 10000000,
-                        "BOLSONARO (PL)": 9000000,
-                        "CIRO (PDT)": 500000
-                    },
-                    "33": {
-                        "LULA (PT)": 5000000,
-                        "BOLSONARO (PL)": 4000000,
-                        "CIRO (PDT)": 200000
-                    }
-                },
-                "municipios": {
-                    "3550308": {
-                        "LULA (PT)": 2000000,
-                        "BOLSONARO (PL)": 1500000,
-                        "CIRO (PDT)": 100000
-                    }
-                }
-            },
-            "2": {
-                "estados": {
-                    "35": {
-                        "LULA (PT)": 11000000,
-                        "BOLSONARO (PL)": 9500000
-                    },
-                    "33": {
-                        "LULA (PT)": 5200000,
-                        "BOLSONARO (PL)": 4100000
-                    }
-                },
-                "municipios": {
-                    "3550308": {
-                        "LULA (PT)": 2100000,
-                        "BOLSONARO (PL)": 1600000
-                    }
-                }
-            }
-        };
-        
-        // Adicionar alerta informativo
-        setTimeout(() => {
-            alert("⚠️ DADOS DE DEMONSTRAÇÃO\n\nPara dados reais:\n1. Execute o script do Colab\n2. Baixe o arquivo .zip\n3. Extraia a pasta 'data' na mesma pasta deste HTML");
-        }, 500);
     }
 
     function renderSidebar() {
@@ -412,10 +337,10 @@
         list.innerHTML = '';
         STATE.active.clear();
 
-        // Agregação Nacional (Somente ESTADOS)
+        // Agrega Nacionalmente (Somando ESTADOS)
         let total = {}, grandTotal = 0;
         Object.values(STATE.currentTurn.estados).forEach(uf => {
-            Object.entries(uf).forEach(([c, v]) => {
+            Object.entries(uf).forEach(([c,v]) => {
                 total[c] = (total[c]||0) + v;
                 grandTotal += v;
             });
@@ -435,7 +360,7 @@
                 <div class="cand-data">
                     <div class="cand-top"><span class="cand-name">${c}</span><span class="cand-pct">${pct}%</span></div>
                     <div class="cand-votes">${v.toLocaleString()} votos</div>
-                    <div class="prog-bar"><div class="prog-fill" style="width:${pct}%; background:${color}"></div></div>
+                    <div class="prog-bg"><div class="prog-fill" style="width:${pct}%; background:${color}"></div></div>
                 </div>
             `;
             list.appendChild(div);
@@ -459,7 +384,7 @@
             el: el, theme: 'polaroid', defaultColor: CONFIG.colors[party],
             onChange: (c) => {
                 STATE.customColors[party] = c;
-                localStorage.setItem('v11colors', JSON.stringify(STATE.customColors));
+                localStorage.setItem('colorsV10', JSON.stringify(STATE.customColors));
                 el.style.background = c;
                 updateLayer(STATE.layers.brazil);
                 updateLayer(STATE.layers.cities);
@@ -471,11 +396,12 @@
 
     // --- MAP STYLES ---
     function style(feature) {
+        // Lógica de ID: Se Brasil, usa ID numérico do estado. Se Cidade, usa codarea IBGE 7 digitos
         let key = STATE.view==='BRASIL' ? String(feature.properties.id) : String(feature.properties.codarea || feature.properties.id);
         let type = STATE.view==='BRASIL' ? 'estados' : 'municipios';
         
         const s = getStats(key, type);
-        if(!s) return { fillColor:'#1a1a1a', weight:1, color:'#333', fillOpacity:0.6 };
+        if(!s) return { fillColor:'#222', weight:1, color:'#333', fillOpacity:0.5 };
         
         const color = getColor(s.winner);
         // Transparencia: >30% começa a aparecer, >80% é solido
@@ -487,12 +413,10 @@
 
     function onEachFeature(f, l) {
         l.on('click', () => {
-            if(STATE.view==='BRASIL') {
-                // Carregar cidades com fallback
-                loadCities(f.properties.id, f.properties.name||f.properties.sigla);
-            } else {
-                STATE.region = { id: String(f.properties.codarea||f.properties.id), name: f.properties.name, type: 'municipio' };
-                document.getElementById('currentRegionName').innerText = f.properties.name;
+            if(STATE.view==='BRASIL') loadCities(f.properties.id, f.properties.name||f.properties.sigla);
+            else {
+                STATE.region = { id: String(f.properties.codarea||f.properties.id), name: f.properties.name };
+                document.getElementById('currentRegion').innerText = f.properties.name;
                 updateResults();
             }
         });
@@ -501,9 +425,8 @@
             let key = STATE.view==='BRASIL' ? String(f.properties.id) : String(f.properties.codarea||f.properties.id);
             let type = STATE.view==='BRASIL' ? 'estados' : 'municipios';
             const s = getStats(key, type);
-            const name = f.properties.name || f.properties.sigla;
-            if(!s) return `<div class="leaflet-tooltip-own"><div class="tt-h">${name}</div><div class="tt-b">Sem dados</div></div>`;
-            return `<div class="leaflet-tooltip-own"><div class="tt-h">${name}</div><div class="tt-b"><b>${s.winner}</b><br>${s.pct.toFixed(1)}%</div></div>`;
+            if(!s) return f.properties.name;
+            return `<b>${f.properties.name}</b><br>${s.winner}<br>${s.pct.toFixed(1)}%`;
         }, {sticky:true, className:'leaflet-tooltip-own'});
     }
 
@@ -511,22 +434,23 @@
     async function loadCities(ufId, name) {
         document.getElementById('loader').classList.remove('hidden');
         
-        // Tenta IBGE V3
+        // Tenta IBGE V3 Oficial
         let url = `https://servicodados.ibge.gov.br/api/v3/malhas/estados/${ufId}/municipios?qualidade=minima&formato=application/vnd.geo+json`;
         
         try {
             let res = await fetch(url);
-            if(!res.ok) throw new Error("Falha na API do IBGE");
+            if(!res.ok) throw new Error();
             let geo = await res.json();
             renderCities(geo, ufId, name);
         } catch(e) {
-            console.warn("Fallback para dados locais...");
+            console.warn("Fallback GitHub...");
             try {
-                // Fallback para GeoJSON local (criar manualmente se necessário)
-                alert(`Para visualizar municípios:\n1. Execute o script completo no Colab\n2. Ou use o arquivo de municípios gerado`);
-                resetToBrazil();
+                let res2 = await fetch(`https://raw.githubusercontent.com/tbrugz/geodata-br/master/geojson/geojs-${ufId}-mun.json`);
+                let geo2 = await res2.json();
+                geo2.features.forEach(f => { if(f.properties.id) f.properties.codarea = String(f.properties.id); });
+                renderCities(geo2, ufId, name);
             } catch(e2) {
-                alert("Erro ao carregar mapa da região.");
+                alert("Erro ao carregar mapa.");
                 resetToBrazil();
             }
         } finally {
@@ -543,8 +467,8 @@
         map.fitBounds(STATE.layers.cities.getBounds());
         
         document.getElementById('backBtn').style.display = 'flex';
-        STATE.region = { id: String(id), name: name, type: 'estado' };
-        document.getElementById('currentRegionName').innerText = name;
+        STATE.region = { id: String(id), name: name, type: 'estado' }; // Guarda que estamos vendo um estado
+        document.getElementById('currentRegion').innerText = name;
         updateResults();
     }
 
@@ -554,8 +478,8 @@
         STATE.view = 'BRASIL';
         map.setView([-15.7,-47.8], 4);
         document.getElementById('backBtn').style.display = 'none';
-        STATE.region = { id:null, name:'Brasil', type:'brasil' };
-        document.getElementById('currentRegionName').innerText = 'Brasil';
+        STATE.region = { id:null, name:'Brasil' };
+        document.getElementById('currentRegion').innerText = 'Brasil';
         updateResults();
     }
 
@@ -563,48 +487,37 @@
         if(STATE.layers.brazil && !map.hasLayer(STATE.layers.brazil)) {
             STATE.layers.brazil.addTo(map);
             updateLayer(STATE.layers.brazil);
-            document.getElementById('loader').classList.add('hidden');
             return;
         }
         
-        // GeoJSON dos estados brasileiros
-        const brazilGeoJSON = {
-            "type": "FeatureCollection",
-            "features": [
-                {
-                    "type": "Feature",
-                    "properties": {"sigla": "SP", "name": "São Paulo"},
-                    "geometry": {"type": "Polygon", "coordinates": [[[-53.1, -25.3], [-44.0, -25.3], [-44.0, -19.8], [-53.1, -19.8], [-53.1, -25.3]]]}
-                },
-                {
-                    "type": "Feature",
-                    "properties": {"sigla": "RJ", "name": "Rio de Janeiro"},
-                    "geometry": {"type": "Polygon", "coordinates": [[[-44.9, -23.8], [-40.9, -23.8], [-40.9, -20.8], [-44.9, -20.8], [-44.9, -23.8]]]}
-                }
-            ]
-        };
-        
-        brazilGeoJSON.features.forEach(f => f.properties.id = CONFIG.ufIds[f.properties.sigla]);
-        STATE.layers.brazil = L.geoJson(brazilGeoJSON, {style:style, onEachFeature:onEachFeature}).addTo(map);
-        document.getElementById('loader').classList.add('hidden');
+        fetch('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson')
+        .then(r=>r.json()).then(d=>{
+            d.features.forEach(f => f.properties.id = CONFIG.ufIds[f.properties.sigla]);
+            STATE.layers.brazil = L.geoJson(d, {style:style, onEachFeature:onEachFeature}).addTo(map);
+            document.getElementById('loader').classList.add('hidden');
+        });
     }
 
-    // --- PAINEL RESULTADOS ---
+    // --- RESULTS PANEL ---
     function updateResults() {
         const div = document.getElementById('resultsBody');
         const { id, type } = STATE.region;
         
+        // Se estamos vendo cidades mas clicamos no titulo estado, mostramos estatistica do estado
         let key = id, mode = STATE.view === 'BRASIL' ? 'estados' : 'municipios';
-        if(type === 'estado') mode = 'estados'; 
+        if(type === 'estado') mode = 'estados'; // Override se clicou no estado e carregou cidades
 
-        if(!key || !STATE.currentTurn) {
-             div.innerHTML = '<div class="empty"><i class="fas fa-chart-pie fa-2x"></i><br>Clique em "CARREGAR MAPA" para ver dados</div>';
+        // Se Brasil (null id), usa agregacao simples para evitar crash (idealmente agregaria tudo)
+        if(!key) {
+             // Simplificado para Brasil: Poderia usar o 'total' do sidebar, mas aqui renderiza o gráfico
+             // Se não tiver chave, limpa
+             div.innerHTML = '<div class="empty"><i class="fas fa-chart-pie fa-2x"></i><br>Selecione um local</div>';
              return;
         }
 
         const s = getStats(key, mode);
         if(!s) {
-            div.innerHTML = '<div class="empty">Sem dados disponíveis para esta região.</div>';
+            div.innerHTML = '<div class="empty">Sem dados aqui.</div>';
             return;
         }
 
@@ -624,14 +537,12 @@
                 const c = getColor(r.c);
                 const pct = ((r.v/s.total)*100).toFixed(1);
                 return `
-                <div class="chart-row">
-                    <div class="chart-head">
+                <div style="margin-bottom:12px">
+                    <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:4px">
                         <span>${r.c.split('(')[0]}</span>
-                        <span>${r.v.toLocaleString()}</span>
+                        <span>${pct}%</span>
                     </div>
-                    <div class="chart-bg">
-                        <div class="chart-bar" style="width:${pct}%; background:${c}">${pct}%</div>
-                    </div>
+                    <div class="prog-bg"><div class="prog-fill" style="width:${pct}%; background:${c}"></div></div>
                 </div>`;
             }).join('')}
         `;
