@@ -3,58 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Atlas Eleitoral 3.0</title>
+    <title>Visualizador Eleitoral (Debug Mode)</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
     <style>
-        :root { --bg: #111; --panel: rgba(20,20,20,0.9); --accent: #2563eb; --text: #eee; }
-        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
+        body { margin: 0; font-family: 'Inter', sans-serif; background: #111; color: #eee; overflow: hidden; }
         #app { width: 100vw; height: 100vh; position: relative; }
-        #map { width: 100%; height: 100%; z-index: 1; background: #0b0f19; }
-
-        /* Painel Flutuante */
+        #map { width: 100%; height: 100%; background: #0b0f19; z-index: 1; }
+        
         .sidebar {
             position: absolute; top: 20px; left: 20px; width: 320px; bottom: 20px;
-            background: var(--panel); backdrop-filter: blur(10px);
-            border: 1px solid #333; border-radius: 12px; z-index: 1000;
-            display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            background: rgba(20,20,20,0.9); border: 1px solid #333; 
+            border-radius: 12px; z-index: 1000; display: flex; flex-direction: column;
+            backdrop-filter: blur(5px);
         }
-        .header { padding: 20px; border-bottom: 1px solid #333; }
-        .controls { padding: 15px; border-bottom: 1px solid #333; display: flex; flex-direction: column; gap: 10px; }
-        select, button { width: 100%; padding: 10px; background: #222; border: 1px solid #444; color: white; border-radius: 6px; cursor: pointer; }
-        button { background: var(--accent); border: none; font-weight: bold; }
-        button:hover { filter: brightness(1.1); }
+        .header, .controls { padding: 20px; border-bottom: 1px solid #333; }
+        .list { flex: 1; overflow-y: auto; }
+        select, button { width: 100%; padding: 10px; background: #222; border: 1px solid #444; color: white; margin-bottom: 5px; cursor: pointer; }
+        button { background: #2563eb; font-weight: bold; border: none; }
         
-        .list-container { flex: 1; overflow-y: auto; padding: 0; }
-        .cand-row { padding: 10px 15px; border-bottom: 1px solid #222; display: flex; align-items: center; gap: 10px; font-size: 0.85rem; }
+        .cand-row { padding: 10px 20px; border-bottom: 1px solid #222; display: flex; align-items: center; gap: 10px; font-size: 0.9rem; }
         .cand-row:hover { background: #222; }
         
-        /* Legenda */
-        .legend { position: absolute; bottom: 20px; right: 20px; background: var(--panel); padding: 10px; border-radius: 8px; z-index: 999; width: 180px; font-size: 0.75rem; border: 1px solid #333; }
-        .grad-bar { height: 8px; background: linear-gradient(90deg, #333, #fff); margin: 5px 0; }
-        
-        .back-btn { position: absolute; top: 20px; left: 360px; z-index: 1000; display: none; padding: 10px 20px; background: var(--accent); color: white; border: none; border-radius: 30px; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
-        
-        #loader { position: absolute; inset: 0; background: #000; z-index: 2000; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.5s; }
+        .back-btn { position: absolute; top: 20px; left: 360px; z-index: 1000; display: none; padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 20px; cursor: pointer; }
+        #loader { position: absolute; inset: 0; background: #000; z-index: 2000; display: flex; justify-content: center; align-items: center; transition: opacity 0.3s; }
         .hidden { opacity: 0; pointer-events: none; }
     </style>
 </head>
 <body>
 
-<div id="loader"><i class="fas fa-circle-notch fa-spin fa-2x"></i><p style="margin-top:10px">Carregando...</p></div>
+<div id="loader"><h1>Carregando...</h1></div>
 
 <div id="app">
-    <button class="back-btn" id="backBtn" onclick="resetMap()"><i class="fas fa-arrow-left"></i> Voltar para Brasil</button>
-    
+    <button class="back-btn" id="backBtn" onclick="resetMap()">Voltar para Brasil</button>
     <aside class="sidebar">
-        <div class="header">
-            <h1 style="margin:0; font-size:1.2rem;">🗳️ Eleições Brasil</h1>
-            <small style="color:#888">Visualização Detalhada</small>
-        </div>
+        <div class="header"><h1>Eleições Brasil</h1></div>
         <div class="controls">
             <select id="yearSelect"></select>
             <select id="roleSelect">
@@ -62,23 +49,11 @@
                 <option value="governor">Governador</option>
                 <option value="senator">Senador</option>
             </select>
-            <button onclick="loadData()">CARREGAR DADOS</button>
+            <button onclick="loadData()">CARREGAR</button>
         </div>
-        <div class="list-container" id="candList">
-            <div style="padding:20px; text-align:center; color:#666">Selecione e carregue.</div>
-        </div>
+        <div class="list" id="candList"></div>
     </aside>
-
     <main id="map"></main>
-
-    <div class="legend">
-        <b>Intensidade do Vencedor</b>
-        <div class="grad-bar"></div>
-        <div style="display:flex; justify-content:space-between; color:#888">
-            <span>+ Disputado</span>
-            <span>+ Vitória</span>
-        </div>
-    </div>
 </div>
 
 <script>
@@ -87,11 +62,10 @@
     const yearSel = document.getElementById('yearSelect');
     years.forEach(y => { let o = document.createElement('option'); o.value=y; o.text=y; yearSel.add(o); });
 
-    const partyColors = {
-        'PT':'#ef4444', 'PL':'#1d4ed8', 'PSB':'#ef4444', 'PDT':'#f97316', 
-        'UNIÃO':'#2563eb', 'PSDB':'#1e40af', 'MDB':'#16a34a', 'PSD':'#f59e0b', 
-        'PP':'#0ea5e9', 'NOVO':'#f97316', 'DEFAULT':'#64748b'
-    };
+    const partyColors = { 'PT':'#ef4444', 'PL':'#1d4ed8', 'PSB':'#ef4444', 'PDT':'#f97316', 'UNIÃO':'#2563eb', 'PSDB':'#1e40af', 'MDB':'#16a34a', 'PSD':'#f59e0b', 'PP':'#0ea5e9', 'NOVO':'#f97316', 'DEFAULT':'#64748b' };
+    
+    // IDs IBGE Estados
+    const ufIds = {'RO':11,'AC':12,'AM':13,'RR':14,'PA':15,'AP':16,'TO':17,'MA':21,'PI':22,'CE':23,'RN':24,'PB':25,'PE':26,'AL':27,'SE':28,'BA':29,'MG':31,'ES':32,'RJ':33,'SP':35,'PR':41,'SC':42,'RS':43,'MS':50,'MT':51,'GO':52,'DF':53};
 
     const map = L.map('map', { center: [-15.7, -47.8], zoom: 4, zoomControl: false, background:'#0b0f19' });
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png').addTo(map);
@@ -101,83 +75,14 @@
     let layers = { brazil: null, cities: null };
     let viewMode = 'BRASIL';
 
-    // --- FUNÇÕES ÚTEIS ---
-    
-    // Normaliza nome para bater com o JSON (remove acentos)
+    // --- NORMALIZAÇÃO (CRUCIAL PARA O MAPA FUNCIONAR) ---
     function normalizeName(str) {
-        return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+        if(!str) return "";
+        // Remove acentos e põe em maiúsculo (Igual ao Python)
+        return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
     }
 
-    // Calcula vencedor baseado nos checkboxes
-    function getWinner(key, type) {
-        // type = 'estados' (key=ID IBGE) ou 'municipios' (key=NOME)
-        if (!currentData || !currentData[type]) return null;
-        
-        const votesObj = currentData[type][key];
-        if (!votesObj) return null; // Não achou a cidade/estado
-
-        let max = -1, winner = null, totalActive = 0;
-        
-        Object.entries(votesObj).forEach(([cand, votes]) => {
-            if(activeCandidates.has(cand)) {
-                totalActive += votes;
-                if(votes > max) { max = votes; winner = cand; }
-            }
-        });
-
-        if(!winner) return null;
-        return { 
-            winner, 
-            pct: (max/totalActive)*100, 
-            party: winner.match(/\((.*?)\)/)?.[1] || 'DEFAULT',
-            votes: max 
-        };
-    }
-
-    // --- RENDERIZAÇÃO ---
-
-    function style(feature) {
-        let result;
-        if (viewMode === 'BRASIL') {
-            // Usa ID do IBGE (propriedade 'id' do GeoJSON)
-            result = getWinner(String(feature.properties.id), 'estados');
-        } else {
-            // Usa NOME da Cidade normalizado
-            const name = normalizeName(feature.properties.nome || feature.properties.name);
-            result = getWinner(name, 'municipios');
-        }
-
-        if(!result) return { fillColor: '#1a1a1a', weight: 1, color: '#333', fillOpacity: 0.5 };
-
-        const color = partyColors[result.party] || partyColors['DEFAULT'];
-        let op = (result.pct - 30) / 60; // Gradiente
-        op = Math.max(0.3, Math.min(1, 0.2 + op));
-
-        return { fillColor: color, weight: viewMode==='BRASIL'?1:0.5, color: '#000', fillOpacity: op };
-    }
-
-    function onEachFeature(feature, layer) {
-        layer.on('click', async () => {
-            if(viewMode === 'BRASIL') {
-                // Entrar no Estado
-                const ufId = feature.properties.id;
-                await loadCities(ufId);
-            }
-        });
-
-        layer.bindPopup(() => {
-            let key = viewMode==='BRASIL' ? String(feature.properties.id) : normalizeName(feature.properties.nome);
-            let type = viewMode==='BRASIL' ? 'estados' : 'municipios';
-            let res = getWinner(key, type);
-            let name = feature.properties.name || feature.properties.nome;
-            
-            if(!res) return `<b>${name}</b><br>Sem dados`;
-            return `<b>${name}</b><br><b style="color:${partyColors[res.party]}">${res.winner}</b><br>${res.pct.toFixed(1)}% (${res.votes.toLocaleString()} votos)`;
-        });
-    }
-
-    // --- CARREGAMENTO ---
-
+    // --- CARREGAMENTO DE DADOS ---
     async function loadData() {
         const year = document.getElementById('yearSelect').value;
         const role = document.getElementById('roleSelect').value;
@@ -185,15 +90,18 @@
 
         try {
             const r = await fetch(`data/${year}_${role}.json`);
-            if(!r.ok) throw new Error();
+            if(!r.ok) throw new Error(`Arquivo data/${year}_${role}.json não encontrado!`);
             currentData = await r.json();
             
             setupSidebar();
-            if(viewMode === 'BRASIL') refreshMap();
-            else resetMap(); // Volta pro Brasil se mudar dados estando na cidade
+            if(viewMode === 'BRASIL') {
+                if(layers.brazil) layers.brazil.setStyle(style);
+            } else {
+                resetMap();
+            }
 
         } catch(e) {
-            alert("Dados não encontrados. Verifique a pasta 'data'.");
+            alert(e.message);
         } finally {
             document.getElementById('loader').classList.add('hidden');
         }
@@ -204,7 +112,7 @@
         list.innerHTML = '';
         activeCandidates.clear();
 
-        // Agrega votos totais para a sidebar
+        // Agrega para lista
         let totals = {};
         Object.values(currentData.estados).forEach(uf => {
             Object.entries(uf).forEach(([c,v]) => totals[c] = (totals[c]||0)+v);
@@ -212,72 +120,137 @@
 
         Object.entries(totals).sort((a,b)=>b[1]-a[1]).forEach(([cand, votes]) => {
             activeCandidates.add(cand);
-            const party = cand.match(/\((.*?)\)/)?.[1];
+            const party = cand.match(/\((.*?)\)/)?.[1] || 'DEFAULT';
             const div = document.createElement('div');
             div.className = 'cand-row';
-            div.innerHTML = `
-                <input type="checkbox" checked onchange="toggleCand('${cand}')">
-                <div style="width:10px;height:10px;border-radius:50%;background:${partyColors[party]||'#888'}"></div>
-                <div><b>${cand}</b><br><span style="color:#888">${votes.toLocaleString()} votos</span></div>
-            `;
+            div.innerHTML = `<input type="checkbox" checked onchange="toggleCand('${cand}')"> 
+                             <span style="color:${partyColors[party]||'#aaa'}">●</span> 
+                             ${cand}`;
             list.appendChild(div);
         });
     }
 
     function toggleCand(c) {
-        if(activeCandidates.has(c)) activeCandidates.delete(c);
-        else activeCandidates.add(c);
+        if(activeCandidates.has(c)) activeCandidates.delete(c); else activeCandidates.add(c);
         if(layers.brazil) layers.brazil.setStyle(style);
         if(layers.cities) layers.cities.setStyle(style);
     }
 
-    // --- LÓGICA DE NAVEGAÇÃO ---
+    // --- CÁLCULO DE COR ---
+    function getWinner(key, type) {
+        if (!currentData) return null;
+        const votesObj = currentData[type][key];
+        
+        // DEBUG: Se o mapa estiver cinza, isso vai ajudar
+        // if(type === 'municipios' && !votesObj) console.log(`Tentando achar cidade [${key}] no JSON... FALHOU`);
+        
+        if (!votesObj) return null;
 
+        let max = -1, winner = null, total = 0;
+        Object.entries(votesObj).forEach(([c,v]) => {
+            if(activeCandidates.has(c)) {
+                total += v;
+                if(v > max) { max = v; winner = c; }
+            }
+        });
+
+        if(!winner) return null;
+        return { 
+            winner, 
+            pct: (max/total)*100, 
+            party: winner.match(/\((.*?)\)/)?.[1] || 'DEFAULT' 
+        };
+    }
+
+    function style(feature) {
+        let result;
+        if (viewMode === 'BRASIL') {
+            result = getWinner(String(feature.properties.id), 'estados');
+        } else {
+            // NORMALIZAÇÃO AQUI
+            const name = normalizeName(feature.properties.name || feature.properties.nome);
+            result = getWinner(name, 'municipios');
+        }
+
+        if(!result) return { fillColor: '#222', weight: 1, color: '#111', fillOpacity: 0.5 };
+
+        const color = partyColors[result.party] || partyColors['DEFAULT'];
+        let op = (result.pct - 30) / 60;
+        return { fillColor: color, weight: viewMode==='BRASIL'?1:0.5, color: '#000', fillOpacity: Math.max(0.3, Math.min(1, 0.2 + op)) };
+    }
+
+    // --- DRILL DOWN COM CORREÇÃO DE API ---
     async function loadCities(ufId) {
         document.getElementById('loader').classList.remove('hidden');
+        
+        // URL da API Ajustada (v3, simples)
+        const url = `https://servicodados.ibge.gov.br/api/v3/malhas/estados/${ufId}/municipios?formato=application/vnd.geo+json`;
+        
+        console.log(`Baixando cidades do estado ${ufId}: ${url}`);
+
         try {
-            const res = await fetch(`https://servicodados.ibge.gov.br/api/v3/malhas/estados/${ufId}/municipios?qualidade=minima&formato=application/vnd.geo+json`);
-            const geo = await res.json();
+            const res = await fetch(url);
+            
+            // Tratamento de erro 404 ou 500 do IBGE
+            if (!res.ok) {
+                if(res.status === 404) throw new Error("IBGE retornou 404 (Estado não encontrado ou API mudou).");
+                throw new Error(`Erro na API do IBGE: ${res.status}`);
+            }
+
+            // Tenta converter para JSON. Se falhar, é porque o IBGE mandou lixo.
+            let geo;
+            try {
+                geo = await res.json();
+            } catch (jsonErr) {
+                throw new Error("Resposta do IBGE inválida (não é JSON).");
+            }
 
             if(layers.brazil) map.removeLayer(layers.brazil);
             
             viewMode = 'CITIES';
-            layers.cities = L.geoJson(geo, { style: style, onEachFeature: onEachFeature }).addTo(map);
+            layers.cities = L.geoJson(geo, { 
+                style: style, 
+                onEachFeature: (f, l) => {
+                    const name = f.properties.name || f.properties.nome;
+                    l.bindPopup(name);
+                }
+            }).addTo(map);
+            
             map.fitBounds(layers.cities.getBounds());
             document.getElementById('backBtn').style.display = 'block';
 
-        } catch(e) { console.error(e); }
-        finally { document.getElementById('loader').classList.add('hidden'); }
+        } catch(e) { 
+            console.error(e);
+            alert(`Falha ao carregar municípios: ${e.message}`);
+        } finally { 
+            document.getElementById('loader').classList.add('hidden'); 
+        }
     }
 
     function resetMap() {
         if(layers.cities) map.removeLayer(layers.cities);
         if(layers.brazil) layers.brazil.addTo(map);
-        else loadBrazil(); // Recarrega se sumiu
+        else loadBrazil();
         
         map.setView([-15.7, -47.8], 4);
         viewMode = 'BRASIL';
         document.getElementById('backBtn').style.display = 'none';
     }
 
-    function refreshMap() {
-        if(layers.brazil) layers.brazil.setStyle(style);
-    }
-
-    // Load inicial
     function loadBrazil() {
-        const ufIds = {'RO':11,'AC':12,'AM':13,'RR':14,'PA':15,'AP':16,'TO':17,'MA':21,'PI':22,'CE':23,'RN':24,'PB':25,'PE':26,'AL':27,'SE':28,'BA':29,'MG':31,'ES':32,'RJ':33,'SP':35,'PR':41,'SC':42,'RS':43,'MS':50,'MT':51,'GO':52,'DF':53};
         fetch('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson')
         .then(r=>r.json())
         .then(d=>{
             d.features.forEach(f=>f.properties.id=ufIds[f.properties.sigla]);
-            layers.brazil = L.geoJson(d, {style:style, onEachFeature:onEachFeature}).addTo(map);
+            layers.brazil = L.geoJson(d, {
+                style:style, 
+                onEachFeature:(f,l)=>l.on('click', ()=>loadCities(f.properties.id))
+            }).addTo(map);
             document.getElementById('loader').classList.add('hidden');
         });
     }
     
     loadBrazil();
-
 </script>
 </body>
 </html>
