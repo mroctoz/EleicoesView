@@ -184,7 +184,7 @@
         document.getElementById('loader').classList.remove('hidden');
         
         // URL da API Ajustada (v3, simples)
-        const url = `https://servicodados.ibge.gov.br/api/v3/malhas/estados/${ufId}/municipios?formato=application/vnd.geo+json`;
+        const url = `https://servicodados.ibge.gov.br/api/v4/malhas/estados/${ufId}/municipios?formato=application/vnd.geo+json`;
         
         console.log(`Baixando cidades do estado ${ufId}: ${url}`);
 
