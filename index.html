@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Atlas Eleitoral V6 - Visualizador Avançado</title>
+    <title>Atlas Eleitoral V7 - Visualizador Oficial</title>
     
     <!-- Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -27,14 +27,16 @@
             --accent-blue: #3b82f6;
             --accent-purple: #8b5cf6;
             --accent-green: #10b981;
-            --text-primary: #f8fafc;
+            --text-primary: #ffffff;
             --text-secondary: #cbd5e1;
-            --text-muted: #64748b;
-            --border-color: rgba(255, 255, 255, 0.1);
-            --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.5);
-            --shadow-md: 0 10px 40px rgba(0, 0, 0, 0.4);
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.15);
+            --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            --shadow-md: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
             --gradient-primary: linear-gradient(135deg, #3b82f6, #8b5cf6);
             --gradient-winner: linear-gradient(135deg, #10b981, #3b82f6);
+            --radius-md: 10px;
+            --radius-lg: 15px;
         }
 
         /* ===== RESET & BASE ===== */
@@ -50,6 +52,8 @@
             color: var(--text-primary);
             overflow: hidden;
             height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         #app {
@@ -77,6 +81,7 @@
             flex-direction: column;
             z-index: 1000;
             box-shadow: var(--shadow-md);
+            transition: transform 0.3s ease;
         }
 
         /* ===== SIDEBAR DIREITA - RESULTADOS ===== */
@@ -89,22 +94,24 @@
             flex-direction: column;
             z-index: 1000;
             box-shadow: var(--shadow-md);
+            transition: transform 0.3s ease;
         }
 
         /* ===== HEADER ===== */
         .header {
             padding: 24px;
             border-bottom: 1px solid var(--border-color);
-            background: rgba(10, 12, 16, 0.8);
+            background: linear-gradient(180deg, rgba(10, 12, 16, 0.95) 0%, rgba(10, 12, 16, 0.8) 100%);
         }
 
         .header h1 {
             font-size: 1.5rem;
-            font-weight: 700;
+            font-weight: 800;
             background: var(--gradient-primary);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
         }
 
         .header-subtitle {
@@ -113,12 +120,13 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            font-weight: 500;
         }
 
         /* ===== CONTROLES ===== */
         .controls {
             padding: 20px;
-            background: var(--bg-tertiary);
+            background: linear-gradient(180deg, var(--bg-tertiary) 0%, rgba(28, 36, 49, 0.9) 100%);
             border-bottom: 1px solid var(--border-color);
         }
 
@@ -137,7 +145,7 @@
 
         .control-label {
             font-size: 0.75rem;
-            font-weight: 600;
+            font-weight: 700;
             color: var(--text-secondary);
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -145,45 +153,48 @@
 
         select {
             padding: 10px 12px;
-            background: var(--bg-secondary);
+            background: rgba(255, 255, 255, 0.07);
             border: 1px solid var(--border-color);
             border-radius: 8px;
             color: var(--text-primary);
             font-family: 'Inter', sans-serif;
             font-size: 0.875rem;
+            font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
+            outline: none;
         }
 
         select:hover {
             border-color: var(--accent-blue);
+            background: rgba(59, 130, 246, 0.1);
         }
 
         select:focus {
-            outline: none;
             border-color: var(--accent-blue);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
         }
 
         .btn-primary {
-            padding: 12px;
+            padding: 12px 16px;
             background: var(--gradient-primary);
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             color: white;
-            font-weight: 600;
+            font-weight: 700;
             font-size: 0.875rem;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 10px;
+            letter-spacing: 0.3px;
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 12px 30px rgba(59, 130, 246, 0.4);
         }
 
         .btn-primary:active {
@@ -195,64 +206,90 @@
             flex: 1;
             overflow-y: auto;
             padding: 16px;
+            background: linear-gradient(180deg, rgba(10, 12, 16, 0.3) 0%, transparent 100%);
         }
 
         .cand-row {
             padding: 16px;
-            background: var(--bg-tertiary);
-            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
             margin-bottom: 10px;
-            border: 1px solid transparent;
-            transition: all 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 14px;
+            cursor: pointer;
         }
 
         .cand-row:hover {
             border-color: var(--accent-blue);
-            background: rgba(59, 130, 246, 0.05);
-            transform: translateX(4px);
+            background: rgba(59, 130, 246, 0.15);
+            transform: translateX(6px) scale(1.01);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .cand-row.active {
+            border-color: var(--accent-blue);
+            background: rgba(59, 130, 246, 0.2);
         }
 
         .cand-checkbox {
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
             border: 2px solid var(--border-color);
-            border-radius: 6px;
+            border-radius: 7px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.2s;
             flex-shrink: 0;
+            position: relative;
         }
 
         .cand-checkbox.checked {
             background: var(--accent-blue);
             border-color: var(--accent-blue);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
         }
 
         .cand-checkbox.checked::after {
             content: '✓';
             color: white;
-            font-size: 12px;
+            font-size: 14px;
             font-weight: bold;
+            position: relative;
+            top: -1px;
         }
 
         .cand-color {
-            width: 24px;
-            height: 24px;
-            border-radius: 6px;
+            width: 26px;
+            height: 26px;
+            border-radius: 8px;
             cursor: pointer;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.2s;
+            border: 2px solid rgba(255, 255, 255, 0.25);
+            transition: all 0.3s;
             flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
         }
 
         .cand-color:hover {
-            transform: scale(1.1);
+            transform: scale(1.15);
             border-color: white;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+
+        .cand-color::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 100%);
+            border-radius: 6px;
         }
 
         .cand-info {
@@ -264,200 +301,347 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
 
         .cand-name {
-            font-weight: 600;
+            font-weight: 700;
             font-size: 0.95rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            color: var(--text-primary);
         }
 
         .cand-percentage {
-            font-weight: 700;
-            font-size: 1rem;
+            font-weight: 800;
+            font-size: 1.05rem;
             background: var(--gradient-primary);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            letter-spacing: -0.3px;
         }
 
         .cand-sub {
             display: flex;
             justify-content: space-between;
-            font-size: 0.75rem;
+            font-size: 0.78rem;
             color: var(--text-muted);
+            margin-bottom: 10px;
+            font-weight: 500;
         }
 
         .progress-container {
-            margin-top: 10px;
+            margin-top: 8px;
         }
 
         .progress-bar {
-            height: 6px;
+            height: 8px;
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
+            border-radius: 4px;
             overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
         }
 
         .progress-fill {
             height: 100%;
-            border-radius: 3px;
-            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 4px;
+            transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, rgba(255,255,255,0.4) 0%, transparent 100%);
+            border-radius: 4px;
         }
 
         /* ===== PAINEL DE RESULTADOS ===== */
         .results-header {
-            padding: 20px;
+            padding: 20px 24px;
             border-bottom: 1px solid var(--border-color);
-            background: rgba(10, 12, 16, 0.8);
+            background: linear-gradient(180deg, rgba(10, 12, 16, 0.95) 0%, rgba(10, 12, 16, 0.8) 100%);
         }
 
         .results-header h2 {
-            font-size: 1.25rem;
-            font-weight: 700;
-            margin-bottom: 4px;
+            font-size: 1.35rem;
+            font-weight: 800;
+            margin-bottom: 6px;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
         }
 
         .region-info {
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 0.875rem;
-            color: var(--text-muted);
+            gap: 10px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
         }
 
         .region-icon {
             color: var(--accent-blue);
+            font-size: 1.1rem;
         }
 
         .results-container {
             flex: 1;
             padding: 20px;
             overflow-y: auto;
+            background: linear-gradient(180deg, rgba(10, 12, 16, 0.3) 0%, transparent 100%);
         }
 
         .results-summary {
-            background: var(--bg-tertiary);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
         }
 
         .summary-title {
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 16px;
-            color: var(--text-secondary);
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .summary-title::before {
+            content: '📊';
+            font-size: 1.2rem;
         }
 
         .summary-stats {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
+            gap: 20px;
             margin-top: 16px;
         }
 
         .stat-item {
             text-align: center;
+            padding: 16px 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-3px);
+            background: rgba(255, 255, 255, 0.07);
+            border-color: var(--accent-blue);
         }
 
         .stat-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--accent-blue);
-            margin-bottom: 4px;
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 6px;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
         }
 
         .stat-label {
             font-size: 0.75rem;
             color: var(--text-muted);
             text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+
+        .winner-info {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .winner-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
+        .winner-display {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .winner-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .winner-name {
+            font-weight: 700;
+            font-size: 1.05rem;
+            flex: 1;
+            color: var(--text-primary);
+        }
+
+        .winner-percentage {
+            font-weight: 800;
+            font-size: 1.2rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
         .results-chart {
-            background: var(--bg-tertiary);
-            border-radius: 12px;
-            padding: 20px;
-            border: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
         }
 
         .chart-title {
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 16px;
-            color: var(--text-secondary);
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chart-title::before {
+            content: '📈';
+            font-size: 1.2rem;
         }
 
         .chart-bars {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 14px;
         }
 
         .chart-bar {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 14px;
+            padding: 4px 0;
         }
 
         .bar-label {
-            width: 150px;
-            font-size: 0.875rem;
+            width: 160px;
+            font-size: 0.9rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            font-weight: 600;
+            color: var(--text-secondary);
         }
 
         .bar-container {
             flex: 1;
-            height: 30px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 6px;
+            height: 34px;
+            background: rgba(255, 255, 255, 0.07);
+            border-radius: 8px;
             overflow: hidden;
             position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .bar-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%);
         }
 
         .bar-fill {
             height: 100%;
-            border-radius: 6px;
-            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 8px;
+            transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1);
             position: relative;
             display: flex;
             align-items: center;
-            padding: 0 10px;
-            font-size: 0.75rem;
-            font-weight: 600;
+            padding: 0 12px;
+            font-size: 0.8rem;
+            font-weight: 800;
             color: white;
-            min-width: 60px;
+            min-width: 70px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, rgba(255,255,255,0.3) 0%, transparent 100%);
+            border-radius: 8px;
         }
 
         .bar-value {
-            margin-left: 12px;
-            font-size: 0.875rem;
-            font-weight: 600;
-            min-width: 60px;
+            margin-left: 14px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            min-width: 70px;
             text-align: right;
+            color: var(--text-primary);
         }
 
         /* ===== CONTROLES DO MAPA ===== */
         .map-controls {
             position: absolute;
-            top: 20px;
-            right: 500px;
+            top: 25px;
+            right: 510px;
             z-index: 1000;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
+            background: rgba(10, 12, 16, 0.7);
+            padding: 12px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-md);
         }
 
         .map-btn {
-            width: 40px;
-            height: 40px;
-            background: var(--bg-card);
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.08);
             border: 1px solid var(--border-color);
             border-radius: 10px;
             color: var(--text-secondary);
@@ -465,47 +649,65 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s;
+            font-size: 1.1rem;
         }
 
         .map-btn:hover {
             background: var(--accent-blue);
             color: white;
             border-color: var(--accent-blue);
-            transform: translateY(-2px);
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
         }
 
         /* ===== LEGENDA ===== */
         .legend {
             position: absolute;
-            bottom: 25px;
-            right: 500px;
-            background: var(--bg-card);
-            padding: 16px;
-            border-radius: 12px;
+            bottom: 30px;
+            right: 510px;
+            background: rgba(10, 12, 16, 0.85);
+            padding: 20px;
+            border-radius: var(--radius-lg);
             z-index: 999;
-            width: 240px;
+            width: 260px;
             border: 1px solid var(--border-color);
-            box-shadow: var(--shadow-md);
+            box-shadow: var(--shadow-lg);
+            backdrop-filter: blur(15px);
         }
 
         .legend-title {
-            font-size: 0.875rem;
-            font-weight: 600;
-            margin-bottom: 12px;
-            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-title::before {
+            content: '🎯';
+            font-size: 1.1rem;
         }
 
         .legend-grid {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
+            grid-template-columns: repeat(10, 1fr);
             gap: 4px;
-            margin-bottom: 12px;
+            margin-bottom: 16px;
         }
 
         .legend-item {
-            height: 20px;
+            height: 22px;
             border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.2s;
+        }
+
+        .legend-item:hover {
+            transform: scale(1.1);
+            border-color: white;
         }
 
         .legend-labels {
@@ -513,43 +715,61 @@
             justify-content: space-between;
             font-size: 0.75rem;
             color: var(--text-muted);
+            font-weight: 600;
+            margin-top: 8px;
         }
 
-        /* ===== TOOLTIP ===== */
+        .legend-note {
+            margin-top: 12px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+        }
+
+        /* ===== TOOLTIP CORRIGIDO ===== */
         .leaflet-tooltip-own {
-            background: rgba(10, 12, 16, 0.95);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 0;
-            backdrop-filter: blur(10px);
-            box-shadow: var(--shadow-lg);
-            max-width: 300px;
+            background: rgba(10, 12, 16, 0.98) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 12px !important;
+            padding: 0 !important;
+            backdrop-filter: blur(20px) !important;
+            box-shadow: var(--shadow-lg) !important;
+            max-width: 320px !important;
+            color: var(--text-primary) !important;
+            font-family: 'Inter', sans-serif !important;
         }
 
         .tt-header {
-            padding: 12px 16px;
-            background: rgba(59, 130, 246, 0.1);
+            padding: 14px 18px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%);
             border-bottom: 1px solid var(--border-color);
-            font-weight: 700;
-            font-size: 0.9rem;
-            border-radius: 10px 10px 0 0;
+            font-weight: 800;
+            font-size: 0.95rem;
+            border-radius: 12px 12px 0 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            color: var(--text-primary) !important;
+            letter-spacing: -0.3px;
         }
 
         .tt-body {
-            padding: 12px 16px;
-            max-height: 300px;
+            padding: 16px 18px;
+            max-height: 350px;
             overflow-y: auto;
+            color: var(--text-primary) !important;
         }
 
         .tt-row {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            gap: 14px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-primary) !important;
         }
 
         .tt-row:last-child {
@@ -557,24 +777,41 @@
         }
 
         .tt-color {
-            width: 12px;
-            height: 12px;
-            border-radius: 3px;
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
             flex-shrink: 0;
+            border: 2px solid rgba(255, 255, 255, 0.3);
         }
 
         .tt-name {
             flex: 1;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            font-weight: 600;
+            color: var(--text-primary) !important;
         }
 
         .tt-values {
             display: flex;
-            gap: 16px;
-            font-size: 0.85rem;
+            gap: 20px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary) !important;
+        }
+
+        .tt-percentage {
+            min-width: 60px;
+            text-align: right;
+            color: var(--accent-blue) !important;
+        }
+
+        .tt-votes {
+            min-width: 80px;
+            text-align: right;
+            color: var(--text-secondary) !important;
             font-weight: 600;
         }
 
@@ -588,21 +825,42 @@
             align-items: center;
             justify-content: center;
             flex-direction: column;
-            transition: opacity 0.3s, visibility 0.3s;
+            transition: opacity 0.5s, visibility 0.5s;
+            backdrop-filter: blur(20px);
         }
 
         .loader-content {
             text-align: center;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            max-width: 400px;
         }
 
         .loader-spinner {
-            width: 60px;
-            height: 60px;
-            border: 3px solid var(--border-color);
+            width: 70px;
+            height: 70px;
+            border: 3px solid rgba(59, 130, 246, 0.2);
             border-top-color: var(--accent-blue);
             border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
+            animation: spin 1.2s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+            margin: 0 auto 25px;
+            position: relative;
+        }
+
+        .loader-spinner::after {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            right: -3px;
+            bottom: -3px;
+            border: 3px solid transparent;
+            border-top-color: var(--accent-purple);
+            border-radius: 50%;
+            animation: spin 1.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite reverse;
         }
 
         @keyframes spin {
@@ -610,9 +868,18 @@
         }
 
         .loader-text {
-            font-size: 1rem;
-            color: var(--text-secondary);
-            margin-top: 12px;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin-top: 10px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .loader-subtext {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 8px;
+            font-weight: 500;
         }
 
         .hidden {
@@ -623,15 +890,29 @@
 
         /* ===== ESTADO VAZIO ===== */
         .empty-state {
-            padding: 40px 20px;
+            padding: 50px 20px;
             text-align: center;
             color: var(--text-muted);
         }
 
         .empty-icon {
-            font-size: 3rem;
-            margin-bottom: 16px;
-            opacity: 0.5;
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            opacity: 0.6;
+        }
+
+        .empty-title {
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+            font-weight: 700;
+        }
+
+        .empty-text {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            max-width: 300px;
+            margin: 0 auto;
         }
 
         /* ===== RESPONSIVIDADE ===== */
@@ -644,22 +925,28 @@
 
         /* ===== SCROLLBAR ===== */
         ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+            width: 10px;
+            height: 10px;
         }
 
         ::-webkit-scrollbar-track {
             background: rgba(255, 255, 255, 0.05);
-            border-radius: 4px;
+            border-radius: 5px;
         }
 
         ::-webkit-scrollbar-thumb {
             background: rgba(255, 255, 255, 0.2);
-            border-radius: 4px;
+            border-radius: 5px;
+            border: 2px solid transparent;
+            background-clip: padding-box;
         }
 
         ::-webkit-scrollbar-thumb:hover {
             background: rgba(255, 255, 255, 0.3);
+        }
+
+        ::-webkit-scrollbar-corner {
+            background: transparent;
         }
     </style>
 </head>
@@ -668,7 +955,8 @@
 <div id="loader" class="hidden">
     <div class="loader-content">
         <div class="loader-spinner"></div>
-        <div class="loader-text">Carregando dados eleitorais...</div>
+        <div class="loader-text">Carregando dados eleitorais</div>
+        <div class="loader-subtext">Isso pode levar alguns segundos</div>
     </div>
 </div>
 
@@ -676,28 +964,28 @@
     <!-- Sidebar Esquerda - Candidatos -->
     <aside class="sidebar-left">
         <div class="header">
-            <h1>🗳️ Atlas Eleitoral Brasil</h1>
+            <h1><i class="fas fa-vote-yea" style="margin-right: 10px;"></i> Atlas Eleitoral V7</h1>
             <div class="header-subtitle">
-                <i class="fas fa-chart-line"></i>
-                <span>Simulador de Cenários Eleitorais</span>
+                <i class="fas fa-chart-network"></i>
+                <span>Visualizador Oficial de Resultados Eleitorais</span>
             </div>
         </div>
         
         <div class="controls">
             <div class="controls-grid">
                 <div class="control-group">
-                    <label class="control-label">Ano Eleitoral</label>
+                    <label class="control-label"><i class="fas fa-calendar-alt"></i> Ano</label>
                     <select id="yearSelect"></select>
                 </div>
                 <div class="control-group">
-                    <label class="control-label">Turno</label>
+                    <label class="control-label"><i class="fas fa-exchange-alt"></i> Turno</label>
                     <select id="turnSelect">
                         <option value="1">1º Turno</option>
                         <option value="2">2º Turno</option>
                     </select>
                 </div>
                 <div class="control-group">
-                    <label class="control-label">Cargo</label>
+                    <label class="control-label"><i class="fas fa-user-tie"></i> Cargo</label>
                     <select id="roleSelect">
                         <option value="president">Presidente</option>
                         <option value="governor">Governador</option>
@@ -705,7 +993,7 @@
                     </select>
                 </div>
                 <div class="control-group">
-                    <label class="control-label">Exibição</label>
+                    <label class="control-label"><i class="fas fa-eye"></i> Exibição</label>
                     <select id="viewSelect">
                         <option value="percentage">Por Percentual</option>
                         <option value="votes">Por Votos</option>
@@ -713,15 +1001,16 @@
                 </div>
             </div>
             <button class="btn-primary" onclick="loadData()">
-                <i class="fas fa-sync-alt"></i>
-                ATUALIZAR VISUALIZAÇÃO
+                <i class="fas fa-rocket"></i>
+                CARREGAR DADOS
             </button>
         </div>
 
         <div class="list-container" id="candList">
             <div class="empty-state">
                 <div class="empty-icon">🗳️</div>
-                <p>Selecione os filtros acima e clique em "ATUALIZAR VISUALIZAÇÃO" para carregar os dados eleitorais.</p>
+                <div class="empty-title">Aguardando dados</div>
+                <div class="empty-text">Configure os filtros acima e clique em "CARREGAR DADOS" para visualizar os candidatos</div>
             </div>
         </div>
     </aside>
@@ -742,7 +1031,8 @@
         <div class="results-container" id="resultsContainer">
             <div class="empty-state">
                 <div class="empty-icon">📊</div>
-                <p>Clique em um estado ou município no mapa para visualizar os resultados detalhados.</p>
+                <div class="empty-title">Nenhuma região selecionada</div>
+                <div class="empty-text">Clique em um estado ou município no mapa para visualizar os resultados detalhados</div>
             </div>
         </div>
     </aside>
@@ -750,28 +1040,31 @@
     <!-- Controles do Mapa -->
     <div class="map-controls">
         <button class="map-btn" id="zoomIn" title="Aumentar Zoom">
-            <i class="fas fa-plus"></i>
+            <i class="fas fa-search-plus"></i>
         </button>
         <button class="map-btn" id="zoomOut" title="Diminuir Zoom">
-            <i class="fas fa-minus"></i>
+            <i class="fas fa-search-minus"></i>
         </button>
         <button class="map-btn" id="resetView" title="Voltar para Brasil" onclick="resetToBrazil()">
             <i class="fas fa-globe-americas"></i>
+        </button>
+        <button class="map-btn" id="fullscreen" title="Tela Cheia" onclick="toggleFullscreen()">
+            <i class="fas fa-expand"></i>
         </button>
     </div>
 
     <!-- Legenda -->
     <div class="legend">
-        <div class="legend-title">Intensidade do Voto (%)</div>
+        <div class="legend-title">Intensidade do Voto</div>
         <div class="legend-grid" id="legendGrid"></div>
         <div class="legend-labels">
             <span>0-10%</span>
-            <span>40-50%</span>
-            <span>90-100%</span>
+            <span>50%</span>
+            <span>100%</span>
         </div>
-        <div style="margin-top: 12px; font-size: 0.75rem; color: var(--text-muted);">
+        <div class="legend-note">
             <i class="fas fa-info-circle"></i>
-            Cor mais escura = Maior percentual
+            <span>Cor mais escura = Maior percentual do vencedor</span>
         </div>
     </div>
 </div>
@@ -779,17 +1072,24 @@
 <script>
     // ==================== CONFIGURAÇÃO INICIAL ====================
     const CONFIG = {
-        years: [2022, 2018],
-        ufIds: {
-            'RO':11,'AC':12,'AM':13,'RR':14,'PA':15,'AP':16,'TO':17,'MA':21,'PI':22,'CE':23,'RN':24,'PB':25,
-            'PE':26,'AL':27,'SE':28,'BA':29,'MG':31,'ES':32,'RJ':33,'SP':35,'PR':41,'SC':42,'RS':43,
-            'MS':50,'MT':51,'GO':52,'DF':53
+        years: [2022, 2018, 2014, 2010],
+        ufCodes: {
+            'RO': '11', 'AC': '12', 'AM': '13', 'RR': '14', 'PA': '15', 
+            'AP': '16', 'TO': '17', 'MA': '21', 'PI': '22', 'CE': '23', 
+            'RN': '24', 'PB': '25', 'PE': '26', 'AL': '27', 'SE': '28', 
+            'BA': '29', 'MG': '31', 'ES': '32', 'RJ': '33', 'SP': '35', 
+            'PR': '41', 'SC': '42', 'RS': '43', 'MS': '50', 'MT': '51', 
+            'GO': '52', 'DF': '53'
         },
         defaultColors: {
             'PT': '#E12525', 'PL': '#0056A8', 'PSB': '#E12525', 'PDT': '#F58220', 
             'UNIÃO': '#0056A8', 'PSDB': '#009EE3', 'MDB': '#008000', 'PSD': '#FAA21B',
             'PP': '#0066CC', 'NOVO': '#F58220', 'REPUBLICANOS': '#0066CC',
-            'SOLIDARIEDADE': '#F58220', 'DEFAULT': '#64748b'
+            'SOLIDARIEDADE': '#F58220', 'PATRIOTA': '#FFD700', 'PCdoB': '#FF0000',
+            'PV': '#00FF00', 'CIDADANIA': '#FFA500', 'AVANTE': '#800080',
+            'PROS': '#FF1493', 'PMB': '#8B4513', 'DC': '#A52A2A',
+            'PSTU': '#FF4500', 'PCB': '#FF0000', 'UP': '#8B0000',
+            'VARIOS': '#808080', 'DEFAULT': '#64748b'
         }
     };
 
@@ -802,8 +1102,10 @@
         customColors: JSON.parse(localStorage.getItem('eleitoralCustomColors')) || {},
         layers: { brazil: null, cities: null },
         viewMode: 'BRASIL',
-        currentRegion: { type: 'brasil', id: null, name: 'Brasil' },
-        colorPickers: {}
+        currentRegion: { type: 'brasil', id: null, name: 'Brasil', code: null },
+        colorPickers: {},
+        isLoading: false,
+        municipalityCache: new Map()
     };
 
     // ==================== INICIALIZAÇÃO ====================
@@ -815,7 +1117,10 @@
         // Inicializar selects
         const yearSelect = document.getElementById('yearSelect');
         CONFIG.years.forEach(year => {
-            yearSelect.add(new Option(year, year));
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            yearSelect.appendChild(option);
         });
         yearSelect.value = '2022';
 
@@ -830,6 +1135,8 @@
         
         // Carregar base do Brasil
         loadBrazilBase();
+        
+        console.log('✅ Aplicação inicializada');
     }
 
     function initMap() {
@@ -837,14 +1144,18 @@
             center: [-15.7, -47.8],
             zoom: 4,
             zoomControl: false,
-            background: '#0a0c10'
+            background: '#0a0c10',
+            preferCanvas: true,
+            maxBounds: [[-35, -75], [6, -30]],
+            maxBoundsViscosity: 1.0
         });
 
         // Camada base escura
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
             attribution: '© OpenStreetMap, © CartoDB',
             maxZoom: 18,
-            minZoom: 3
+            minZoom: 3,
+            noWrap: true
         }).addTo(STATE.map);
     }
 
@@ -862,19 +1173,19 @@
         const legendGrid = document.getElementById('legendGrid');
         const colorStops = [];
         
-        // Gerar 10 faixas de cor (0-10%, 10-20%, ..., 90-100%)
+        // Gerar 10 faixas de cor de claro para escuro
         for (let i = 0; i < 10; i++) {
             const minPct = i * 10;
             const maxPct = (i + 1) * 10;
             const intensity = i / 9; // 0 a 1
             
-            // Cor base (azul)
+            // Cor base (azul médio)
             const baseColor = [59, 130, 246]; // #3b82f6
             
             // Escurecer progressivamente
             const darkness = intensity * 0.7; // Até 70% mais escuro
             const newColor = baseColor.map(channel => {
-                return Math.round(channel * (1 - darkness));
+                return Math.max(0, Math.round(channel * (1 - darkness)));
             });
             
             const color = `rgb(${newColor.join(',')})`;
@@ -887,11 +1198,22 @@
         }).join('');
     }
 
+    function toggleFullscreen() {
+        const elem = document.documentElement;
+        if (!document.fullscreenElement) {
+            elem.requestFullscreen().catch(err => {
+                console.log(`Erro ao entrar em tela cheia: ${err.message}`);
+            });
+        } else {
+            document.exitFullscreen();
+        }
+    }
+
     // ==================== FUNÇÕES DE CORES ====================
     function getColorForPercentage(percentage, baseColor = '#3b82f6') {
-        const pct = Math.min(100, Math.max(0, percentage));
+        const pct = Math.min(100, Math.max(0, parseFloat(percentage) || 0));
         const level = Math.floor(pct / 10); // 0-9
-        const intensity = level / 9; // 0 a 1
+        const intensity = Math.max(0, Math.min(1, level / 9)); // 0 a 1
         
         // Converter cor hexadecimal para RGB
         let r, g, b;
@@ -911,10 +1233,10 @@
         }
         
         // Aplicar escuridão progressiva
-        const darkness = intensity * 0.7; // Até 70% mais escuro
-        const darkR = Math.round(r * (1 - darkness));
-        const darkG = Math.round(g * (1 - darkness));
-        const darkB = Math.round(b * (1 - darkness));
+        const darkness = intensity * 0.7;
+        const darkR = Math.max(0, Math.round(r * (1 - darkness)));
+        const darkG = Math.max(0, Math.round(g * (1 - darkness)));
+        const darkB = Math.max(0, Math.round(b * (1 - darkness)));
         
         return `rgb(${darkR}, ${darkG}, ${darkB})`;
     }
@@ -933,40 +1255,52 @@
 
     function extractPartyFromCandidate(candidateName) {
         const match = candidateName.match(/\((.*?)\)/);
-        return match ? match[1] : 'DEFAULT';
+        return match ? match[1].trim() : 'DEFAULT';
+    }
+
+    function extractCandidateName(candidateString) {
+        const match = candidateString.match(/^(.*?)\s*\(/);
+        return match ? match[1].trim() : candidateString;
     }
 
     function openColorPicker(party, currentColor, element) {
-        // Criar ou reutilizar color picker
-        if (!STATE.colorPickers[party]) {
-            STATE.colorPickers[party] = Pickr.create({
-                el: element,
-                theme: 'nano',
-                default: currentColor,
-                swatches: [
-                    '#E12525', '#0056A8', '#008000', '#F58220', '#009EE3',
-                    '#FAA21B', '#0066CC', '#8B5CF6', '#10B981', '#EF4444'
-                ],
-                components: {
-                    preview: true,
-                    opacity: false,
-                    hue: true,
-                    interaction: {
-                        hex: true,
-                        rgba: true,
-                        input: true,
-                        save: true
-                    }
+        // Fechar pickers anteriores
+        Object.values(STATE.colorPickers).forEach(picker => {
+            if (picker && picker.destroy) picker.destroy();
+        });
+        
+        // Criar novo color picker
+        STATE.colorPickers[party] = Pickr.create({
+            el: element,
+            theme: 'nano',
+            default: currentColor,
+            swatches: [
+                '#E12525', '#0056A8', '#008000', '#F58220', '#009EE3',
+                '#FAA21B', '#0066CC', '#8B5CF6', '#10B981', '#EF4444',
+                '#8B0000', '#FFD700', '#FF1493', '#800080', '#00FF00'
+            ],
+            components: {
+                preview: true,
+                opacity: false,
+                hue: true,
+                interaction: {
+                    hex: true,
+                    rgba: true,
+                    input: true,
+                    save: true,
+                    clear: true
                 }
-            }).on('save', (color) => {
-                if (color) {
-                    const hexColor = color.toHEXA().toString();
-                    updateCustomColor(party, hexColor);
-                }
-            });
-        } else {
-            STATE.colorPickers[party].setColor(currentColor);
-        }
+            }
+        }).on('save', (color) => {
+            if (color) {
+                const hexColor = color.toHEXA().toString();
+                updateCustomColor(party, hexColor);
+            }
+        }).on('clear', () => {
+            // Restaurar cor padrão
+            const defaultColor = CONFIG.defaultColors[party] || CONFIG.defaultColors['DEFAULT'];
+            updateCustomColor(party, defaultColor);
+        });
     }
 
     function updateCustomColor(party, color) {
@@ -999,21 +1333,26 @@
         let totalActive = 0;
         let ranking = [];
         
+        // Filtrar apenas candidatos ativos e calcular totais
         Object.entries(votesObj).forEach(([candidate, votes]) => {
             if (STATE.activeCandidates.has(candidate)) {
-                totalActive += votes;
-                if (votes > maxVotes) {
-                    maxVotes = votes;
+                const votesNum = parseInt(votes) || 0;
+                totalActive += votesNum;
+                if (votesNum > maxVotes) {
+                    maxVotes = votesNum;
                     winner = candidate;
                 }
-                ranking.push({ candidate, votes });
+                ranking.push({ candidate, votes: votesNum });
             }
         });
         
-        if (!winner) return null;
+        if (!winner || totalActive === 0) return null;
         
+        // Ordenar ranking
         ranking.sort((a, b) => b.votes - a.votes);
-        const percentage = (maxVotes / totalActive) * 100;
+        
+        // Calcular percentuais com 2 casas decimais
+        const percentage = parseFloat(((maxVotes / totalActive) * 100).toFixed(2));
         const party = extractPartyFromCandidate(winner);
 
         return {
@@ -1022,34 +1361,43 @@
             votes: maxVotes,
             total: totalActive,
             party,
-            ranking: ranking.slice(0, 10)
+            ranking: ranking.map(item => ({
+                ...item,
+                percentage: parseFloat(((item.votes / totalActive) * 100).toFixed(2))
+            })).slice(0, 12)
         };
     }
 
     // ==================== CARREGAMENTO DE DADOS ====================
     async function loadData() {
+        if (STATE.isLoading) return;
+        
         const year = document.getElementById('yearSelect').value;
         const role = document.getElementById('roleSelect').value;
         const turn = document.getElementById('turnSelect').value;
         
         showLoader();
+        STATE.isLoading = true;
 
         try {
             const fileName = `data/${year}_${role}.json`;
-            console.log(`Carregando dados de: ${fileName}`);
+            console.log(`📂 Carregando: ${fileName}`);
             
             const response = await fetch(fileName);
             if (!response.ok) {
-                throw new Error(`Erro ao carregar arquivo: ${response.status} ${response.statusText}`);
+                throw new Error(`Arquivo não encontrado: ${fileName}`);
             }
             
             STATE.fullData = await response.json();
+            console.log('✅ Dados carregados com sucesso');
             
             if (!STATE.fullData[turn]) {
-                alert(`Não há dados disponíveis para o ${turn}º turno nesta eleição.`);
+                alert(`⚠️ Não há dados disponíveis para o ${turn}º turno nesta eleição.`);
                 STATE.currentTurnData = null;
             } else {
                 STATE.currentTurnData = STATE.fullData[turn];
+                console.log(`📊 Dados do turno ${turn} carregados`);
+                
                 setupCandidatesSidebar();
                 
                 if (STATE.viewMode === 'BRASIL') {
@@ -1062,9 +1410,10 @@
             }
 
         } catch (error) {
-            console.error('Erro ao carregar dados:', error);
-            alert(`Erro ao carregar dados: ${error.message}\nVerifique se o arquivo existe na pasta 'data/'.`);
+            console.error('❌ Erro ao carregar dados:', error);
+            alert(`❌ Erro ao carregar dados:\n${error.message}\n\nVerifique se o arquivo existe na pasta 'data/'.`);
         } finally {
+            STATE.isLoading = false;
             hideLoader();
         }
     }
@@ -1078,19 +1427,23 @@
             list.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-icon">📭</div>
-                    <p>Nenhum dado disponível para os filtros selecionados.</p>
+                    <div class="empty-title">Dados indisponíveis</div>
+                    <div class="empty-text">Nenhum dado encontrado para os filtros selecionados</div>
                 </div>
             `;
             return;
         }
 
         // Calcular totais nacionais CORRETAMENTE
-        // Evitar duplicação somando cada candidato apenas uma vez por estado
         let nationalTotals = {};
+        let totalVotosNacional = 0;
         
+        // Usar a estrutura já agregada do JSON
         Object.values(STATE.currentTurnData.estados).forEach(stateData => {
             Object.entries(stateData).forEach(([candidate, votes]) => {
-                nationalTotals[candidate] = (nationalTotals[candidate] || 0) + votes;
+                const votesNum = parseInt(votes) || 0;
+                nationalTotals[candidate] = (nationalTotals[candidate] || 0) + votesNum;
+                totalVotosNacional += votesNum;
             });
         });
 
@@ -1098,47 +1451,68 @@
         const sortedCandidates = Object.entries(nationalTotals)
             .sort((a, b) => b[1] - a[1]);
         
-        const grandTotal = sortedCandidates.reduce((sum, [_, votes]) => sum + votes, 0);
-
         if (sortedCandidates.length === 0) {
             list.innerHTML = `
                 <div class="empty-state">
-                    <div class="empty-icon">📭</div>
-                    <p>Nenhum candidato encontrado para os filtros selecionados.</p>
+                    <div class="empty-icon">👤</div>
+                    <div class="empty-title">Nenhum candidato</div>
+                    <div class="empty-text">Nenhum candidato encontrado para os filtros selecionados</div>
                 </div>
             `;
             return;
         }
 
+        // Adicionar estatísticas no cabeçalho
+        const statsHeader = document.createElement('div');
+        statsHeader.className = 'cand-row';
+        statsHeader.style.background = 'rgba(59, 130, 246, 0.1)';
+        statsHeader.style.borderColor = 'var(--accent-blue)';
+        statsHeader.innerHTML = `
+            <div style="flex: 1; text-align: center; padding: 10px;">
+                <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 4px;">
+                    <i class="fas fa-chart-bar"></i> TOTAL NACIONAL
+                </div>
+                <div style="font-size: 1.2rem; font-weight: 800; color: var(--accent-blue);">
+                    ${totalVotosNacional.toLocaleString('pt-BR')} votos
+                </div>
+            </div>
+        `;
+        list.appendChild(statsHeader);
+
         // Renderizar cada candidato
         sortedCandidates.forEach(([candidate, votes]) => {
             STATE.activeCandidates.add(candidate);
             const party = extractPartyFromCandidate(candidate);
-            const percentage = ((votes / grandTotal) * 100).toFixed(2);
+            const percentage = totalVotosNacional > 0 
+                ? parseFloat(((votes / totalVotosNacional) * 100).toFixed(2))
+                : 0;
             const color = getCandidateColor(candidate);
+            const candidateName = extractCandidateName(candidate);
 
             const row = document.createElement('div');
             row.className = 'cand-row';
             row.innerHTML = `
                 <div class="cand-checkbox checked" 
-                     onclick="toggleCandidate('${candidate.replace(/'/g, "\\'")}')"></div>
+                     onclick="toggleCandidate('${candidate.replace(/'/g, "\\'")}')"
+                     title="${STATE.activeCandidates.has(candidate) ? 'Remover da visualização' : 'Adicionar à visualização'}"></div>
                 <div class="cand-color" 
                      style="background: ${color}"
-                     onclick="event.stopPropagation(); openColorPicker('${party}', '${color}', this)">
+                     onclick="event.stopPropagation(); openColorPicker('${party}', '${color}', this)"
+                     title="Clique para alterar a cor">
                 </div>
                 <div class="cand-info">
                     <div class="cand-header">
-                        <span class="cand-name">${candidate}</span>
-                        <span class="cand-percentage">${percentage}%</span>
+                        <span class="cand-name" title="${candidate}">${candidateName}</span>
+                        <span class="cand-percentage">${percentage.toFixed(2)}%</span>
                     </div>
                     <div class="cand-sub">
-                        <span>${votes.toLocaleString('pt-BR')} votos</span>
-                        <span>Total Nacional</span>
+                        <span><i class="fas fa-vote-yea"></i> ${votes.toLocaleString('pt-BR')} votos</span>
+                        <span>${party}</span>
                     </div>
                     <div class="progress-container">
                         <div class="progress-bar">
                             <div class="progress-fill" 
-                                 style="width: ${percentage}%; background: ${color}">
+                                 style="width: ${Math.min(100, percentage)}%; background: ${color}">
                             </div>
                         </div>
                     </div>
@@ -1149,28 +1523,46 @@
     }
 
     function updateCandidatesSidebar() {
-        const rows = document.querySelectorAll('.cand-row');
+        const rows = document.querySelectorAll('.cand-row:not(:first-child)');
         rows.forEach(row => {
-            const candidateName = row.querySelector('.cand-name').textContent;
-            const color = getCandidateColor(candidateName);
-            const colorBox = row.querySelector('.cand-color');
-            const progressFill = row.querySelector('.progress-fill');
-            
-            if (colorBox) colorBox.style.background = color;
-            if (progressFill) progressFill.style.background = color;
+            const candidateName = row.querySelector('.cand-name')?.textContent;
+            if (candidateName) {
+                const fullCandidate = Array.from(STATE.activeCandidates).find(c => 
+                    extractCandidateName(c) === candidateName
+                );
+                if (fullCandidate) {
+                    const color = getCandidateColor(fullCandidate);
+                    const colorBox = row.querySelector('.cand-color');
+                    const progressFill = row.querySelector('.progress-fill');
+                    
+                    if (colorBox) colorBox.style.background = color;
+                    if (progressFill) progressFill.style.background = color;
+                }
+            }
         });
     }
 
     function toggleCandidate(candidate) {
-        const row = document.querySelector(`.cand-row .cand-name[data-candidate="${candidate}"]`)?.closest('.cand-row');
-        const checkbox = row?.querySelector('.cand-checkbox');
+        const rows = document.querySelectorAll('.cand-row');
+        let targetRow = null;
+        let checkbox = null;
+        
+        rows.forEach(row => {
+            const nameElement = row.querySelector('.cand-name');
+            if (nameElement && nameElement.textContent === extractCandidateName(candidate)) {
+                targetRow = row;
+                checkbox = row.querySelector('.cand-checkbox');
+            }
+        });
         
         if (STATE.activeCandidates.has(candidate)) {
             STATE.activeCandidates.delete(candidate);
             checkbox?.classList.remove('checked');
+            targetRow?.style.setProperty('opacity', '0.6');
         } else {
             STATE.activeCandidates.add(candidate);
             checkbox?.classList.add('checked');
+            targetRow?.style.setProperty('opacity', '1');
         }
         
         updateMapStyle();
@@ -1179,24 +1571,36 @@
 
     // ==================== MAPA E ESTILOS ====================
     function getMapStyle(feature) {
-        let key, type;
+        let key = null;
+        let type = null;
         
         if (STATE.viewMode === 'BRASIL') {
-            key = String(feature.properties.id);
+            key = feature.properties.id || feature.properties.codarea;
             type = 'estados';
         } else {
-            key = normalizeName(feature.properties.name || feature.properties.nome);
+            // Usar código IBGE para municípios
+            key = feature.properties.codarea || feature.properties.cd_mun || feature.properties.id;
             type = 'municipios';
         }
 
-        const stats = getStats(key, type);
-        if (!stats) {
+        if (!key) {
             return {
                 fillColor: '#1a1a1a',
                 weight: 1,
                 color: '#333',
-                fillOpacity: 0.6,
-                opacity: 0.8
+                fillOpacity: 0.5,
+                opacity: 0.7
+            };
+        }
+
+        const stats = getStats(key.toString(), type);
+        if (!stats) {
+            return {
+                fillColor: '#1a1a1a',
+                weight: 1,
+                color: '#444',
+                fillOpacity: 0.5,
+                opacity: 0.7
             };
         }
 
@@ -1205,10 +1609,11 @@
 
         return {
             fillColor: finalColor,
-            weight: STATE.viewMode === 'BRASIL' ? 1.5 : 0.8,
-            color: '#000',
-            fillOpacity: 0.9,
-            opacity: 1
+            weight: STATE.viewMode === 'BRASIL' ? 1.8 : 0.9,
+            color: '#111',
+            fillOpacity: 0.85,
+            opacity: 1,
+            dashArray: null
         };
     }
 
@@ -1224,49 +1629,78 @@
     function onEachFeature(feature, layer) {
         layer.on('click', () => {
             if (STATE.viewMode === 'BRASIL') {
-                const ufId = feature.properties.id;
-                const ufName = feature.properties.name || feature.properties.sigla;
-                loadCities(ufId, ufName);
+                const ufCode = feature.properties.id || feature.properties.codarea;
+                const ufName = feature.properties.name || feature.properties.nome || feature.properties.sigla;
+                loadCities(ufCode, ufName);
             } else {
+                const cityCode = feature.properties.codarea || feature.properties.cd_mun || feature.properties.id;
                 const cityName = feature.properties.name || feature.properties.nome;
                 const ufName = getCurrentUFName();
-                setCurrentRegion('municipio', normalizeName(cityName), `${cityName} - ${ufName}`);
+                setCurrentRegion('municipio', cityCode, `${cityName} - ${ufName}`, cityCode);
                 updateResultsPanel();
             }
         });
 
-        layer.on('mouseover', function() {
+        layer.on('mouseover', function(e) {
             this.setStyle({
-                weight: 3,
-                color: '#fff'
+                weight: STATE.viewMode === 'BRASIL' ? 3 : 1.5,
+                color: '#ffffff',
+                fillOpacity: 0.95
             });
+            
+            if (!STATE.map._tooltip) {
+                this.openTooltip(e.latlng);
+            }
         });
 
         layer.on('mouseout', function() {
             this.setStyle(getMapStyle(feature));
+            this.closeTooltip();
         });
 
+        // Tooltip customizado
         layer.bindTooltip(() => {
-            let key = STATE.viewMode === 'BRASIL' 
-                ? String(feature.properties.id) 
-                : normalizeName(feature.properties.name || feature.properties.nome);
-                
-            let type = STATE.viewMode === 'BRASIL' ? 'estados' : 'municipios';
-            const stats = getStats(key, type);
-            const name = feature.properties.name || feature.properties.nome;
+            let key = null;
+            let type = null;
+            
+            if (STATE.viewMode === 'BRASIL') {
+                key = feature.properties.id || feature.properties.codarea;
+                type = 'estados';
+            } else {
+                key = feature.properties.codarea || feature.properties.cd_mun || feature.properties.id;
+                type = 'municipios';
+            }
+            
+            const stats = getStats(key?.toString(), type);
+            const name = feature.properties.name || feature.properties.nome || feature.properties.sigla || 'Desconhecido';
 
-            if (!stats) return `<b>${name}</b><br>Sem dados disponíveis`;
+            if (!stats) {
+                return `
+                    <div class="leaflet-tooltip-own">
+                        <div class="tt-header">
+                            <span>${name}</span>
+                            <span>--</span>
+                        </div>
+                        <div class="tt-body">
+                            <div class="tt-row">
+                                <span>Sem dados disponíveis</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
 
-            let rows = stats.ranking.slice(0, 5).map(item => {
-                const percentage = ((item.votes / stats.total) * 100).toFixed(1);
+            let rows = stats.ranking.slice(0, 6).map(item => {
                 const color = getCandidateColor(item.candidate);
+                const candidateName = extractCandidateName(item.candidate);
+                
                 return `
                     <div class="tt-row">
                         <div class="tt-color" style="background: ${color}"></div>
-                        <div class="tt-name">${item.candidate}</div>
+                        <div class="tt-name" title="${item.candidate}">${candidateName}</div>
                         <div class="tt-values">
-                            <span>${percentage}%</span>
-                            <span>${item.votes.toLocaleString('pt-BR')}</span>
+                            <span class="tt-percentage">${item.percentage.toFixed(2)}%</span>
+                            <span class="tt-votes">${item.votes.toLocaleString('pt-BR')}</span>
                         </div>
                     </div>
                 `;
@@ -1276,10 +1710,15 @@
                 <div class="leaflet-tooltip-own">
                     <div class="tt-header">
                         <span>${name}</span>
-                        <span>${stats.percentage.toFixed(1)}%</span>
+                        <span>${stats.percentage.toFixed(2)}%</span>
                     </div>
                     <div class="tt-body">
                         ${rows}
+                        ${stats.ranking.length > 6 ? 
+                            `<div class="tt-row" style="justify-content: center; color: var(--text-muted); font-size: 0.85rem;">
+                                +${stats.ranking.length - 6} outros candidatos
+                            </div>` : ''
+                        }
                     </div>
                 </div>
             `;
@@ -1287,49 +1726,80 @@
             sticky: true,
             className: 'leaflet-tooltip-own',
             opacity: 1,
-            direction: 'top'
+            direction: 'top',
+            offset: [0, -10]
         });
     }
 
     // ==================== CARREGAMENTO DE MUNICÍPIOS ====================
-    async function loadCities(ufId, ufName) {
+    async function loadCities(ufCode, ufName) {
         showLoader();
-
+        
+        // Limpar código - garantir que seja apenas os 2 dígitos do estado
+        const ufCodeClean = ufCode.toString().substring(0, 2);
+        
         try {
             // Tentar diferentes endpoints do IBGE
             const endpoints = [
-                `https://servicodados.ibge.gov.br/api/v3/malhas/estados/${ufId}/municipios?formato=application/vnd.geo+json`,
-                `https://servicodados.ibge.gov.br/api/v2/malhas/estados/${ufId}?formato=application/vnd.geo+json&qualidade=minima&intrarregiao=municipio`
+                `https://servicodados.ibge.gov.br/api/v3/malhas/estados/${ufCodeClean}?formato=application/vnd.geo+json&qualidade=intermediaria&intrarregiao=municipio`,
+                `https://servicodados.ibge.gov.br/api/v2/malhas/${ufCodeClean}?formato=application/vnd.geo+json&qualidade=minima&intrarregiao=municipio`
             ];
 
             let geoData = null;
-            let lastError = null;
-
+            
             for (const endpoint of endpoints) {
                 try {
-                    console.log(`Tentando endpoint: ${endpoint}`);
+                    console.log(`🌐 Tentando endpoint: ${endpoint}`);
                     const response = await fetch(endpoint);
                     
                     if (response.ok) {
                         const contentType = response.headers.get('content-type');
                         if (contentType && contentType.includes('geo+json')) {
                             geoData = await response.json();
+                            console.log(`✅ Dados municipais carregados: ${geoData.features?.length || 0} municípios`);
                             break;
                         }
                     }
                 } catch (error) {
-                    lastError = error;
-                    console.warn(`Falha no endpoint ${endpoint}:`, error);
+                    console.warn(`⚠️ Falha no endpoint: ${error.message}`);
                     continue;
                 }
             }
 
-            if (!geoData) {
-                throw new Error(lastError || 'Não foi possível obter dados do IBGE');
+            if (!geoData || !geoData.features || geoData.features.length === 0) {
+                throw new Error('Não foi possível obter dados municipais do IBGE');
             }
 
-            // Remover camada atual se existir
+            // Processar features para garantir códigos IBGE
+            geoData.features.forEach(feature => {
+                if (!feature.properties) feature.properties = {};
+                
+                // Extrair código IBGE de diferentes propriedades possíveis
+                const codarea = feature.properties.codarea || 
+                               feature.properties.cd_mun || 
+                               feature.properties.cod_ibge ||
+                               feature.properties.id;
+                
+                if (codarea) {
+                    feature.properties.codarea = codarea.toString();
+                    // Garantir 7 dígitos
+                    if (feature.properties.codarea.length === 6) {
+                        feature.properties.codarea = '0' + feature.properties.codarea;
+                    }
+                }
+                
+                // Salvar no cache
+                if (feature.properties.codarea && feature.properties.name) {
+                    STATE.municipalityCache.set(feature.properties.codarea, {
+                        name: feature.properties.name,
+                        uf: ufName
+                    });
+                }
+            });
+
+            // Remover camada atual
             if (STATE.layers.brazil) STATE.map.removeLayer(STATE.layers.brazil);
+            if (STATE.layers.cities) STATE.map.removeLayer(STATE.layers.cities);
             
             STATE.viewMode = 'MUNICIPIOS';
             STATE.layers.cities = L.geoJson(geoData, {
@@ -1340,40 +1810,57 @@
             // Ajustar visualização
             const bounds = STATE.layers.cities.getBounds();
             if (bounds.isValid()) {
-                STATE.map.fitBounds(bounds, { padding: [50, 50] });
+                STATE.map.fitBounds(bounds, { 
+                    padding: [60, 60],
+                    maxZoom: 9
+                });
             }
 
             // Atualizar região atual
-            setCurrentRegion('estado', ufId, ufName);
+            setCurrentRegion('estado', ufCodeClean, ufName, ufCodeClean);
             updateResultsPanel();
 
         } catch (error) {
-            console.error('Erro ao carregar municípios:', error);
+            console.error('❌ Erro ao carregar municípios:', error);
             
             // Fallback para geometria simplificada
             try {
-                await loadMunicipalFallback(ufId, ufName);
+                await loadMunicipalFallback(ufCodeClean, ufName);
             } catch (fallbackError) {
-                console.error('Fallback também falhou:', fallbackError);
-                alert(`Não foi possível carregar os municípios de ${ufName}.\nErro: ${error.message}`);
+                console.error('❌ Fallback também falhou:', fallbackError);
+                alert(`⚠️ Não foi possível carregar os municípios de ${ufName}.\n\nErro: ${error.message}\n\nVoltando para visualização nacional.`);
+                resetToBrazil();
             }
         } finally {
             hideLoader();
         }
     }
 
-    async function loadMunicipalFallback(ufId, ufName) {
-        // Fallback: usar dados estáticos alternativos
-        const fallbackUrl = `https://raw.githubusercontent.com/tbrugz/geodata-br/master/geojson/geojs-${ufId}-mun.json`;
+    async function loadMunicipalFallback(ufCode, ufName) {
+        // Fallback para dados estáticos do GitHub
+        const fallbackUrl = `https://raw.githubusercontent.com/tbrugz/geodata-br/master/geojson/geojs-${ufCode}-mun.json`;
         
+        console.log(`🔄 Tentando fallback: ${fallbackUrl}`);
         const response = await fetch(fallbackUrl);
+        
         if (!response.ok) {
             throw new Error('Fallback não disponível');
         }
 
         const geoData = await response.json();
         
+        // Processar features
+        geoData.features.forEach(feature => {
+            if (feature.properties && feature.properties.id) {
+                feature.properties.codarea = feature.properties.id.toString();
+                if (feature.properties.codarea.length === 6) {
+                    feature.properties.codarea = '0' + feature.properties.codarea;
+                }
+            }
+        });
+
         if (STATE.layers.brazil) STATE.map.removeLayer(STATE.layers.brazil);
+        if (STATE.layers.cities) STATE.map.removeLayer(STATE.layers.cities);
         
         STATE.viewMode = 'MUNICIPIOS';
         STATE.layers.cities = L.geoJson(geoData, {
@@ -1383,10 +1870,13 @@
 
         const bounds = STATE.layers.cities.getBounds();
         if (bounds.isValid()) {
-            STATE.map.fitBounds(bounds, { padding: [50, 50] });
+            STATE.map.fitBounds(bounds, { 
+                padding: [60, 60],
+                maxZoom: 9
+            });
         }
 
-        setCurrentRegion('estado', ufId, ufName);
+        setCurrentRegion('estado', ufCode, ufName, ufCode);
         updateResultsPanel();
     }
 
@@ -1396,10 +1886,12 @@
         fetch('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson')
             .then(response => response.json())
             .then(data => {
-                // Adicionar IDs dos estados
+                // Processar estados brasileiros
                 data.features.forEach(feature => {
-                    const uf = feature.properties.sigla;
-                    feature.properties.id = CONFIG.ufIds[uf] || 0;
+                    const ufSigla = feature.properties.sigla;
+                    feature.properties.id = CONFIG.ufCodes[ufSigla] || '00';
+                    feature.properties.codarea = feature.properties.id;
+                    feature.properties.name = feature.properties.name || feature.properties.sigla;
                 });
 
                 STATE.layers.brazil = L.geoJson(data, {
@@ -1408,14 +1900,14 @@
                 }).addTo(STATE.map);
 
                 // Atualizar região atual
-                setCurrentRegion('brasil', null, 'Brasil');
+                setCurrentRegion('brasil', null, 'Brasil', null);
                 updateResultsPanel();
                 
                 hideLoader();
             })
             .catch(error => {
-                console.error('Erro ao carregar base do Brasil:', error);
-                alert('Erro ao carregar o mapa do Brasil. Verifique sua conexão.');
+                console.error('❌ Erro ao carregar base do Brasil:', error);
+                alert('❌ Erro ao carregar o mapa do Brasil. Verifique sua conexão com a internet.');
                 hideLoader();
             });
     }
@@ -1434,7 +1926,7 @@
         }
         
         STATE.viewMode = 'BRASIL';
-        setCurrentRegion('brasil', null, 'Brasil');
+        setCurrentRegion('brasil', null, 'Brasil', null);
         updateResultsPanel();
         
         STATE.map.setView([-15.7, -47.8], 4);
@@ -1447,8 +1939,8 @@
         return 'UF Desconhecida';
     }
 
-    function setCurrentRegion(type, id, name) {
-        STATE.currentRegion = { type, id, name };
+    function setCurrentRegion(type, id, name, code = null) {
+        STATE.currentRegion = { type, id, name, code };
         document.getElementById('currentRegion').textContent = name;
     }
 
@@ -1460,7 +1952,8 @@
             container.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-icon">📊</div>
-                    <p>Carregue os dados eleitorais para visualizar resultados.</p>
+                    <div class="empty-title">Dados não carregados</div>
+                    <div class="empty-text">Carregue os dados eleitorais para visualizar resultados</div>
                 </div>
             `;
             return;
@@ -1472,7 +1965,8 @@
             container.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-icon">📭</div>
-                    <p>Nenhum dado disponível para esta região.</p>
+                    <div class="empty-title">Sem dados disponíveis</div>
+                    <div class="empty-text">Nenhum dado disponível para esta região com os filtros atuais</div>
                 </div>
             `;
             return;
@@ -1481,11 +1975,14 @@
         // Ordenar candidatos por votos
         const sortedCandidates = stats.ranking.sort((a, b) => b.votes - a.votes);
         const winnerColor = getCandidateColor(stats.winner);
+        const winnerName = extractCandidateName(stats.winner);
 
         // Gerar HTML do painel
         container.innerHTML = `
             <div class="results-summary">
-                <div class="summary-title">Resumo da Região</div>
+                <div class="summary-title">
+                    <i class="fas fa-chart-pie"></i> Resumo da Região
+                </div>
                 <div class="summary-stats">
                     <div class="stat-item">
                         <div class="stat-value">${sortedCandidates.length}</div>
@@ -1496,32 +1993,44 @@
                         <div class="stat-label">Votos Totais</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-value" style="color: ${winnerColor}">${stats.percentage.toFixed(1)}%</div>
+                        <div class="stat-value" style="color: ${winnerColor}">${stats.percentage.toFixed(2)}%</div>
                         <div class="stat-label">Vencedor</div>
                     </div>
                 </div>
-                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color);">
-                    <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 8px;">Vencedor:</div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <div style="width: 12px; height: 12px; border-radius: 3px; background: ${winnerColor}"></div>
-                        <span style="font-weight: 600;">${stats.winner}</span>
+                
+                <div class="winner-info">
+                    <div class="winner-label"><i class="fas fa-crown"></i> Candidato Vencedor</div>
+                    <div class="winner-display">
+                        <div class="winner-color" style="background: ${winnerColor}"></div>
+                        <div class="winner-name" title="${stats.winner}">${winnerName}</div>
+                        <div class="winner-percentage">${stats.percentage.toFixed(2)}%</div>
+                    </div>
+                    <div style="margin-top: 12px; font-size: 0.85rem; color: var(--text-muted); text-align: center;">
+                        <i class="fas fa-info-circle"></i> ${stats.votes.toLocaleString('pt-BR')} votos
                     </div>
                 </div>
             </div>
 
             <div class="results-chart">
-                <div class="chart-title">Distribuição de Votos</div>
+                <div class="chart-title">
+                    <i class="fas fa-chart-bar"></i> Distribuição de Votos
+                </div>
                 <div class="chart-bars">
                     ${sortedCandidates.map(candidate => {
-                        const percentage = ((candidate.votes / stats.total) * 100).toFixed(1);
+                        const percentage = candidate.percentage;
                         const color = getCandidateColor(candidate.candidate);
+                        const candName = extractCandidateName(candidate.candidate);
+                        
                         return `
                             <div class="chart-bar">
-                                <div class="bar-label" title="${candidate.candidate}">${candidate.candidate}</div>
+                                <div class="bar-label" title="${candidate.candidate}">
+                                    <i class="fas fa-user" style="opacity: 0.7; margin-right: 6px;"></i>
+                                    ${candName}
+                                </div>
                                 <div class="bar-container">
                                     <div class="bar-fill" 
-                                         style="width: ${percentage}%; background: ${color}">
-                                        ${percentage}%
+                                         style="width: ${Math.min(100, percentage)}%; background: ${color}">
+                                        ${percentage.toFixed(2)}%
                                     </div>
                                 </div>
                                 <div class="bar-value">
@@ -1545,13 +2054,13 @@
                 stats = getBrazilStats();
                 break;
             case 'estado':
-                if (STATE.currentRegion.id) {
-                    stats = getStats(String(STATE.currentRegion.id), 'estados');
+                if (STATE.currentRegion.code) {
+                    stats = getStats(STATE.currentRegion.code, 'estados');
                 }
                 break;
             case 'municipio':
-                if (STATE.currentRegion.id) {
-                    stats = getStats(STATE.currentRegion.id, 'municipios');
+                if (STATE.currentRegion.code) {
+                    stats = getStats(STATE.currentRegion.code, 'municipios');
                 }
                 break;
         }
@@ -1563,12 +2072,15 @@
         if (!STATE.currentTurnData || !STATE.currentTurnData.estados) return null;
         
         let nationalTotals = {};
+        let totalVotos = 0;
         
         // Somar votos de todos os estados
         Object.values(STATE.currentTurnData.estados).forEach(stateData => {
             Object.entries(stateData).forEach(([candidate, votes]) => {
                 if (STATE.activeCandidates.has(candidate)) {
-                    nationalTotals[candidate] = (nationalTotals[candidate] || 0) + votes;
+                    const votesNum = parseInt(votes) || 0;
+                    nationalTotals[candidate] = (nationalTotals[candidate] || 0) + votesNum;
+                    totalVotos += votesNum;
                 }
             });
         });
@@ -1576,16 +2088,31 @@
         const entries = Object.entries(nationalTotals);
         if (entries.length === 0) return null;
         
-        const total = entries.reduce((sum, [_, votes]) => sum + votes, 0);
-        const winner = entries.reduce((a, b) => a[1] > b[1] ? a : b);
-        const ranking = entries.sort((a, b) => b[1] - a[1])
-            .map(([candidate, votes]) => ({ candidate, votes }));
+        // Encontrar vencedor
+        let winner = entries[0];
+        let maxVotes = 0;
+        
+        entries.forEach(([candidate, votes]) => {
+            if (votes > maxVotes) {
+                maxVotes = votes;
+                winner = [candidate, votes];
+            }
+        });
+        
+        // Calcular ranking
+        const ranking = entries
+            .sort((a, b) => b[1] - a[1])
+            .map(([candidate, votes]) => ({ 
+                candidate, 
+                votes,
+                percentage: parseFloat(((votes / totalVotos) * 100).toFixed(2))
+            }));
         
         return {
             winner: winner[0],
-            percentage: (winner[1] / total) * 100,
+            percentage: parseFloat(((winner[1] / totalVotos) * 100).toFixed(2)),
             votes: winner[1],
-            total: total,
+            total: totalVotos,
             party: extractPartyFromCandidate(winner[0]),
             ranking: ranking
         };
@@ -1597,7 +2124,17 @@
     }
 
     function hideLoader() {
-        document.getElementById('loader').classList.add('hidden');
+        setTimeout(() => {
+            document.getElementById('loader').classList.add('hidden');
+        }, 300);
+    }
+
+    // Formatar números brasileiros
+    function formatNumber(num) {
+        return parseFloat(num).toLocaleString('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
     }
 
     // ==================== FUNÇÕES GLOBAIS ====================
@@ -1605,6 +2142,12 @@
     window.openColorPicker = openColorPicker;
     window.loadData = loadData;
     window.resetToBrazil = resetToBrazil;
+    window.toggleFullscreen = toggleFullscreen;
+
+    // Inicializar tooltips ao carregar
+    window.addEventListener('load', function() {
+        console.log('🚀 Atlas Eleitoral V7 - Pronto para uso');
+    });
 </script>
 </body>
 </html>
