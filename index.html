@@ -3,21 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Atlas Eleitoral - Teste 2022</title>
+    <title>Atlas Eleitoral - Teste Votos 2022</title>
     
     <!-- Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    <!-- Fontes -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
-            font-family: 'Inter', sans-serif;
-            background: #0a0c10;
-            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f1115;
+            color: white;
             overflow: hidden;
             height: 100vh;
         }
@@ -29,11 +26,10 @@
         #map { 
             flex: 1; 
             height: 100%; 
-            background: #0a0c10;
         }
-        .sidebar-left {
+        .sidebar {
             width: 350px;
-            background: rgba(28, 36, 49, 0.95);
+            background: rgba(20, 24, 30, 0.95);
             border-right: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
             flex-direction: column;
@@ -42,16 +38,18 @@
             padding: 20px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
-        .header h1 {
-            font-size: 1.4rem;
-            font-weight: 700;
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
             color: #3b82f6;
-            margin-bottom: 8px;
+        }
+        .subtitle {
+            font-size: 0.9rem;
+            color: #94a3b8;
         }
         .controls {
             padding: 15px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            background: rgba(10, 12, 16, 0.8);
         }
         select, button {
             width: 100%;
@@ -61,7 +59,6 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 8px;
             color: white;
-            font-family: 'Inter', sans-serif;
             font-size: 14px;
             cursor: pointer;
         }
@@ -69,83 +66,49 @@
             background: #3b82f6;
             border: none;
             font-weight: 600;
-            transition: background 0.2s;
         }
         button:hover {
             background: #2563eb;
         }
-        .list-container {
+        .candidates {
             flex: 1;
             overflow-y: auto;
             padding: 15px;
         }
-        .cand-row {
+        .cand-item {
             padding: 12px;
             background: rgba(255, 255, 255, 0.05);
             border-radius: 8px;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             border: 1px solid rgba(255, 255, 255, 0.08);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .cand-checkbox {
-            width: 18px;
-            height: 18px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 4px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .cand-checkbox.checked {
-            background: #3b82f6;
-            border-color: #3b82f6;
-        }
-        .cand-checkbox.checked::after {
-            content: '✓';
-            color: white;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        .cand-info {
-            flex: 1;
         }
         .cand-header {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 4px;
+            margin-bottom: 5px;
         }
         .cand-name {
             font-weight: 600;
             font-size: 14px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
-        .cand-percentage {
+        .cand-votes {
             font-weight: 700;
-            font-size: 14px;
             color: #3b82f6;
         }
-        .cand-sub {
-            display: flex;
-            justify-content: space-between;
+        .cand-party {
             font-size: 12px;
-            color: rgba(255, 255, 255, 0.6);
+            color: #94a3b8;
+            margin-bottom: 8px;
         }
-        .progress-bar {
+        .progress {
             height: 4px;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 2px;
-            margin-top: 6px;
             overflow: hidden;
         }
-        .progress-fill {
+        .progress-bar {
             height: 100%;
             border-radius: 2px;
-            transition: width 0.3s;
         }
         .loader {
             position: absolute;
@@ -153,44 +116,14 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: #0a0c10;
+            background: #0f1115;
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 9999;
+            z-index: 1000;
         }
-        .loader.hidden {
+        .hidden {
             display: none;
-        }
-        .legend {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(28, 36, 49, 0.95);
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            font-size: 12px;
-        }
-        .legend-title {
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #3b82f6;
-        }
-        .legend-grid {
-            display: grid;
-            grid-template-columns: repeat(10, 1fr);
-            gap: 2px;
-            margin-bottom: 8px;
-        }
-        .legend-item {
-            height: 15px;
-            border-radius: 2px;
-        }
-        .legend-labels {
-            display: flex;
-            justify-content: space-between;
-            color: rgba(255, 255, 255, 0.6);
         }
     </style>
 </head>
@@ -199,18 +132,15 @@
 <div id="loader" class="loader">
     <div style="text-align: center;">
         <div style="width: 40px; height: 40px; border: 3px solid rgba(59, 130, 246, 0.3); border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 10px;"></div>
-        <div>Carregando dados...</div>
+        <div>Carregando...</div>
     </div>
 </div>
 
 <div id="app">
-    <!-- Sidebar Esquerda -->
-    <aside class="sidebar-left">
+    <div class="sidebar">
         <div class="header">
             <h1>Atlas Eleitoral 2022</h1>
-            <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6);">
-                Dados corrigidos - Teste de votos
-            </div>
+            <div class="subtitle">Votos Corrigidos - Teste</div>
         </div>
         
         <div class="controls">
@@ -224,135 +154,65 @@
                 <option value="senator">Senador</option>
             </select>
             <button onclick="loadData()">CARREGAR DADOS</button>
+            <button onclick="loadExample()" style="background: #10b981;">TESTE EXEMPLO</button>
         </div>
-
-        <div class="list-container" id="candList">
-            <div style="text-align: center; padding: 40px; color: rgba(255, 255, 255, 0.5);">
-                Selecione os filtros e clique em CARREGAR DADOS
+        
+        <div class="candidates" id="candidatesList">
+            <div style="text-align: center; padding: 40px; color: #64748b;">
+                <div style="font-size: 48px; margin-bottom: 20px;">🗳️</div>
+                <div>Selecione as opções e clique em CARREGAR DADOS</div>
             </div>
         </div>
-    </aside>
-
-    <!-- Mapa -->
-    <div id="map"></div>
-
-    <!-- Legenda -->
-    <div class="legend">
-        <div class="legend-title">Intensidade do Voto</div>
-        <div class="legend-grid" id="legendGrid"></div>
-        <div class="legend-labels">
-            <span>0%</span>
-            <span>50%</span>
-            <span>100%</span>
-        </div>
     </div>
+    
+    <div id="map"></div>
 </div>
 
 <script>
-    // ==================== CONFIGURAÇÃO ====================
-    const CONFIG = {
-        ufCodes: {
-            'RO': '11', 'AC': '12', 'AM': '13', 'RR': '14', 'PA': '15', 
-            'AP': '16', 'TO': '17', 'MA': '21', 'PI': '22', 'CE': '23', 
-            'RN': '24', 'PB': '25', 'PE': '26', 'AL': '27', 'SE': '28', 
-            'BA': '29', 'MG': '31', 'ES': '32', 'RJ': '33', 'SP': '35', 
-            'PR': '41', 'SC': '42', 'RS': '43', 'MS': '50', 'MT': '51', 
-            'GO': '52', 'DF': '53'
-        },
-        partyColors: {
-            'PT': '#E12525', 'PL': '#0056A8', 'PSB': '#E12525', 'PDT': '#F58220', 
-            'UNIÃO': '#0056A8', 'PSDB': '#009EE3', 'MDB': '#008000', 'PSD': '#FAA21B',
-            'PP': '#0066CC', 'NOVO': '#F58220', 'REPUBLICANOS': '#0066CC',
-            'SOLIDARIEDADE': '#F58220', 'DEFAULT': '#64748b'
-        }
+    // Configurações
+    const UF_NAMES = {
+        '11': 'Rondônia', '12': 'Acre', '13': 'Amazonas', '14': 'Roraima',
+        '15': 'Pará', '16': 'Amapá', '17': 'Tocantins', '21': 'Maranhão',
+        '22': 'Piauí', '23': 'Ceará', '24': 'Rio Grande do Norte',
+        '25': 'Paraíba', '26': 'Pernambuco', '27': 'Alagoas', '28': 'Sergipe',
+        '29': 'Bahia', '31': 'Minas Gerais', '32': 'Espírito Santo',
+        '33': 'Rio de Janeiro', '35': 'São Paulo', '41': 'Paraná',
+        '42': 'Santa Catarina', '43': 'Rio Grande do Sul', '50': 'Mato Grosso do Sul',
+        '51': 'Mato Grosso', '52': 'Goiás', '53': 'Distrito Federal'
     };
 
-    // ==================== ESTADO DA APLICAÇÃO ====================
-    const STATE = {
-        map: null,
-        data: null,
-        activeCandidates: new Set(),
-        layers: { brazil: null, cities: null },
-        viewMode: 'BRASIL',
-        currentState: null
-    };
+    // Estado da aplicação
+    let map = null;
+    let currentData = null;
+    let activeCandidates = new Set();
+    let currentLayer = null;
 
-    // ==================== INICIALIZAÇÃO ====================
+    // Inicialização
     document.addEventListener('DOMContentLoaded', function() {
         initMap();
-        initLegend();
-        loadBrazilBase();
+        console.log('✅ Sistema pronto');
     });
 
     function initMap() {
-        STATE.map = L.map('map', {
+        map = L.map('map', {
             center: [-15.7, -47.8],
             zoom: 4,
-            zoomControl: false,
-            background: '#0a0c10'
+            zoomControl: false
         });
 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            attribution: '© OpenStreetMap, © CartoDB',
-            maxZoom: 18,
-            minZoom: 3
-        }).addTo(STATE.map);
+            attribution: '© OpenStreetMap, © CartoDB'
+        }).addTo(map);
     }
 
-    function initLegend() {
-        const legendGrid = document.getElementById('legendGrid');
-        
-        for (let i = 0; i < 10; i++) {
-            const intensity = i / 9;
-            const baseColor = [59, 130, 246];
-            const darkness = intensity * 0.7;
-            const newColor = baseColor.map(channel => {
-                return Math.max(0, Math.round(channel * (1 - darkness)));
-            });
-            
-            const color = `rgb(${newColor.join(',')})`;
-            const item = document.createElement('div');
-            item.className = 'legend-item';
-            item.style.background = color;
-            legendGrid.appendChild(item);
-        }
+    function showLoader() {
+        document.getElementById('loader').classList.remove('hidden');
     }
 
-    function getColorForPercentage(percentage, baseColor = '#3b82f6') {
-        const pct = Math.min(100, Math.max(0, parseFloat(percentage) || 0));
-        const level = Math.floor(pct / 10);
-        const intensity = Math.max(0, Math.min(1, level / 9));
-        
-        let r, g, b;
-        if (baseColor.startsWith('#')) {
-            const hex = baseColor.replace('#', '');
-            r = parseInt(hex.substr(0, 2), 16);
-            g = parseInt(hex.substr(2, 2), 16);
-            b = parseInt(hex.substr(4, 2), 16);
-        } else {
-            r = 59; g = 130; b = 246;
-        }
-        
-        const darkness = intensity * 0.7;
-        const darkR = Math.max(0, Math.round(r * (1 - darkness)));
-        const darkG = Math.max(0, Math.round(g * (1 - darkness)));
-        const darkB = Math.max(0, Math.round(b * (1 - darkness)));
-        
-        return `rgb(${darkR}, ${darkG}, ${darkB})`;
+    function hideLoader() {
+        document.getElementById('loader').classList.add('hidden');
     }
 
-    function getCandidateColor(candidateName) {
-        const match = candidateName.match(/\((.*?)\)/);
-        const party = match ? match[1].trim() : 'DEFAULT';
-        return CONFIG.partyColors[party] || CONFIG.partyColors['DEFAULT'];
-    }
-
-    function extractCandidateName(candidateString) {
-        const match = candidateString.match(/^(.*?)\s*\(/);
-        return match ? match[1].trim() : candidateString;
-    }
-
-    // ==================== CARREGAMENTO DE DADOS ====================
     async function loadData() {
         showLoader();
         
@@ -361,7 +221,7 @@
         
         try {
             const fileName = `data/2022_${role}.json`;
-            console.log(`Carregando: ${fileName}`);
+            console.log(`📂 Carregando: ${fileName}`);
             
             const response = await fetch(fileName);
             if (!response.ok) {
@@ -375,11 +235,11 @@
                 return;
             }
             
-            STATE.data = data[turn];
-            updateCandidatesSidebar();
-            updateMapStyle();
+            currentData = data[turn];
+            displayCandidates();
+            updateMap();
             
-            console.log('✅ Dados carregados:', STATE.data);
+            console.log('✅ Dados carregados:', currentData);
             
         } catch (error) {
             console.error('❌ Erro:', error);
@@ -389,146 +249,177 @@
         }
     }
 
-    function updateCandidatesSidebar() {
-        const list = document.getElementById('candList');
-        list.innerHTML = '';
-        STATE.activeCandidates.clear();
+    function loadExample() {
+        // Dados de exemplo para teste rápido
+        currentData = {
+            'estados': {
+                '35': {  // SP
+                    'LULA (PT)': 10000000,
+                    'JAIR BOLSONARO (PL)': 9000000,
+                    'CIRO GOMES (PDT)': 500000
+                },
+                '33': {  // RJ
+                    'LULA (PT)': 5000000,
+                    'JAIR BOLSONARO (PL)': 4000000,
+                    'CIRO GOMES (PDT)': 200000
+                },
+                '53': {  // DF
+                    'LULA (PT)': 800000,
+                    'JAIR BOLSONARO (PL)': 700000,
+                    'CIRO GOMES (PDT)': 50000
+                }
+            },
+            'municipios': {
+                '3550308': {  // São Paulo-SP
+                    'LULA (PT)': 3000000,
+                    'JAIR BOLSONARO (PL)': 2500000
+                },
+                '3304557': {  // Rio de Janeiro-RJ
+                    'LULA (PT)': 1500000,
+                    'JAIR BOLSONARO (PL)': 1200000
+                }
+            }
+        };
+        
+        displayCandidates();
+        updateMap();
+        
+        console.log('✅ Exemplo carregado');
+    }
 
-        if (!STATE.data || !STATE.data.estados) {
-            list.innerHTML = '<div style="text-align: center; padding: 40px; color: rgba(255, 255, 255, 0.5);">Nenhum dado carregado</div>';
+    function displayCandidates() {
+        const container = document.getElementById('candidatesList');
+        container.innerHTML = '';
+        
+        if (!currentData || !currentData.estados) {
+            container.innerHTML = '<div style="text-align: center; padding: 40px; color: #64748b;">Nenhum dado carregado</div>';
             return;
         }
-
+        
         // Calcular totais nacionais
         let nationalTotals = {};
-        let totalVotos = 0;
+        let totalVotes = 0;
         
-        Object.values(STATE.data.estados).forEach(stateData => {
-            Object.entries(stateData).forEach(([cand, votes]) => {
-                nationalTotals[cand] = (nationalTotals[cand] || 0) + votes;
-                totalVotos += votes;
+        Object.values(currentData.estados).forEach(stateData => {
+            Object.entries(stateData).forEach(([candidate, votes]) => {
+                nationalTotals[candidate] = (nationalTotals[candidate] || 0) + votes;
+                totalVotes += votes;
             });
         });
-
+        
         // Ordenar candidatos
         const sortedCandidates = Object.entries(nationalTotals)
             .sort((a, b) => b[1] - a[1]);
-
+        
         // Cabeçalho
         const header = document.createElement('div');
-        header.className = 'cand-row';
+        header.className = 'cand-item';
         header.style.background = 'rgba(59, 130, 246, 0.1)';
         header.innerHTML = `
-            <div style="flex: 1; text-align: center; padding: 8px;">
-                <div style="font-size: 12px; color: rgba(255, 255, 255, 0.7); margin-bottom: 4px;">
-                    TOTAL NACIONAL
-                </div>
-                <div style="font-size: 16px; font-weight: 700; color: #3b82f6;">
-                    ${totalVotos.toLocaleString('pt-BR')} votos
-                </div>
+            <div style="text-align: center;">
+                <div style="font-size: 12px; color: #94a3b8; margin-bottom: 5px;">TOTAL NACIONAL</div>
+                <div style="font-size: 18px; font-weight: 700; color: #3b82f6;">${totalVotes.toLocaleString('pt-BR')} votos</div>
+                <div style="font-size: 11px; color: #64748b; margin-top: 5px;">${sortedCandidates.length} candidatos</div>
             </div>
         `;
-        list.appendChild(header);
-
+        container.appendChild(header);
+        
         // Candidatos
         sortedCandidates.forEach(([candidate, votes]) => {
-            STATE.activeCandidates.add(candidate);
-            const percentage = totalVotos > 0 ? ((votes / totalVotos) * 100).toFixed(2) : 0;
-            const color = getCandidateColor(candidate);
-            const candidateName = extractCandidateName(candidate);
-
-            const row = document.createElement('div');
-            row.className = 'cand-row';
-            row.innerHTML = `
-                <div class="cand-checkbox checked" onclick="toggleCandidate('${candidate.replace(/'/g, "\\'")}')"></div>
-                <div style="width: 20px; height: 20px; border-radius: 4px; background: ${color};"></div>
-                <div class="cand-info">
-                    <div class="cand-header">
-                        <span class="cand-name" title="${candidate}">${candidateName}</span>
-                        <span class="cand-percentage">${percentage}%</span>
-                    </div>
-                    <div class="cand-sub">
-                        <span>${votes.toLocaleString('pt-BR')} votos</span>
-                        <span>${candidate.match(/\((.*?)\)/)?.[1] || ''}</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${Math.min(100, percentage)}%; background: ${color}"></div>
-                    </div>
+            activeCandidates.add(candidate);
+            
+            const percentage = totalVotes > 0 ? ((votes / totalVotes) * 100).toFixed(2) : 0;
+            const party = candidate.match(/\((.*?)\)/)?.[1] || '';
+            const name = candidate.split('(')[0].trim();
+            
+            // Cor baseada no partido
+            const partyColors = {
+                'PT': '#E12525', 'PL': '#0056A8', 'PDT': '#F58220',
+                'MDB': '#008000', 'PSDB': '#009EE3', 'PSD': '#FAA21B',
+                'PP': '#0066CC', 'NOVO': '#F58220', 'DEFAULT': '#64748b'
+            };
+            const color = partyColors[party] || partyColors['DEFAULT'];
+            
+            const item = document.createElement('div');
+            item.className = 'cand-item';
+            item.innerHTML = `
+                <div class="cand-header">
+                    <div class="cand-name">${name}</div>
+                    <div class="cand-votes">${percentage}%</div>
+                </div>
+                <div class="cand-party">${party} • ${votes.toLocaleString('pt-BR')} votos</div>
+                <div class="progress">
+                    <div class="progress-bar" style="width: ${Math.min(100, percentage)}%; background: ${color};"></div>
                 </div>
             `;
-            list.appendChild(row);
+            
+            // Checkbox para ativar/desativar
+            const checkbox = document.createElement('div');
+            checkbox.style.cssText = 'width: 16px; height: 16px; border: 2px solid #94a3b8; border-radius: 4px; float: right; margin-left: 10px; cursor: pointer;';
+            checkbox.onclick = function(e) {
+                e.stopPropagation();
+                toggleCandidate(candidate, checkbox);
+            };
+            item.querySelector('.cand-header').prepend(checkbox);
+            
+            container.appendChild(item);
         });
     }
 
-    function toggleCandidate(candidate) {
-        const rows = document.querySelectorAll('.cand-row:not(:first-child)');
-        let checkbox = null;
-        
-        rows.forEach(row => {
-            const nameElement = row.querySelector('.cand-name');
-            if (nameElement && nameElement.textContent === extractCandidateName(candidate)) {
-                checkbox = row.querySelector('.cand-checkbox');
-            }
-        });
-        
-        if (STATE.activeCandidates.has(candidate)) {
-            STATE.activeCandidates.delete(candidate);
-            checkbox?.classList.remove('checked');
+    function toggleCandidate(candidate, checkbox) {
+        if (activeCandidates.has(candidate)) {
+            activeCandidates.delete(candidate);
+            checkbox.style.background = 'transparent';
         } else {
-            STATE.activeCandidates.add(candidate);
-            checkbox?.classList.add('checked');
+            activeCandidates.add(candidate);
+            checkbox.style.background = '#3b82f6';
+            checkbox.style.borderColor = '#3b82f6';
+        }
+        updateMap();
+    }
+
+    function updateMap() {
+        if (!currentData || !map) return;
+        
+        // Remover layer anterior
+        if (currentLayer) {
+            map.removeLayer(currentLayer);
         }
         
-        updateMapStyle();
+        // Carregar geojson do Brasil
+        fetch('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson')
+            .then(response => response.json())
+            .then(data => {
+                // Processar features
+                data.features.forEach(feature => {
+                    const ufSigla = feature.properties.sigla;
+                    // Mapeamento simplificado para código
+                    const ufCodes = {
+                        'RO': '11', 'AC': '12', 'AM': '13', 'RR': '14', 'PA': '15',
+                        'AP': '16', 'TO': '17', 'MA': '21', 'PI': '22', 'CE': '23',
+                        'RN': '24', 'PB': '25', 'PE': '26', 'AL': '27', 'SE': '28',
+                        'BA': '29', 'MG': '31', 'ES': '32', 'RJ': '33', 'SP': '35',
+                        'PR': '41', 'SC': '42', 'RS': '43', 'MS': '50', 'MT': '51',
+                        'GO': '52', 'DF': '53'
+                    };
+                    feature.properties.id = ufCodes[ufSigla] || '00';
+                });
+                
+                // Criar layer
+                currentLayer = L.geoJson(data, {
+                    style: getStyle,
+                    onEachFeature: onEachFeature
+                }).addTo(map);
+            })
+            .catch(error => {
+                console.error('Erro ao carregar mapa:', error);
+            });
     }
 
-    function getStats(key, type) {
-        if (!STATE.data || !STATE.data[type]) return null;
+    function getStyle(feature) {
+        const ufCode = feature.properties.id;
         
-        const votesObj = STATE.data[type][key];
-        if (!votesObj) return null;
-
-        let maxVotes = -1;
-        let winner = null;
-        let totalActive = 0;
-        let ranking = [];
-        
-        Object.entries(votesObj).forEach(([candidate, votes]) => {
-            if (STATE.activeCandidates.has(candidate)) {
-                totalActive += votes;
-                if (votes > maxVotes) {
-                    maxVotes = votes;
-                    winner = candidate;
-                }
-                ranking.push({ candidate, votes });
-            }
-        });
-        
-        if (!winner) return null;
-        
-        ranking.sort((a, b) => b.votes - a.votes);
-        
-        return {
-            winner,
-            percentage: ((maxVotes / totalActive) * 100).toFixed(2),
-            votes: maxVotes,
-            total: totalActive,
-            ranking: ranking.slice(0, 5)
-        };
-    }
-
-    function getMapStyle(feature) {
-        let key, type;
-        
-        if (STATE.viewMode === 'BRASIL') {
-            key = feature.properties.id;
-            type = 'estados';
-        } else {
-            key = feature.properties.codarea || feature.properties.id;
-            type = 'municipios';
-        }
-
-        if (!key) {
+        if (!currentData.estados[ufCode]) {
             return {
                 fillColor: '#1a1a1a',
                 weight: 1,
@@ -536,9 +427,23 @@
                 fillOpacity: 0.5
             };
         }
-
-        const stats = getStats(key.toString(), type);
-        if (!stats) {
+        
+        // Encontrar vencedor entre candidatos ativos
+        let winner = null;
+        let maxVotes = 0;
+        let totalVotes = 0;
+        
+        Object.entries(currentData.estados[ufCode]).forEach(([candidate, votes]) => {
+            if (activeCandidates.has(candidate)) {
+                totalVotes += votes;
+                if (votes > maxVotes) {
+                    maxVotes = votes;
+                    winner = candidate;
+                }
+            }
+        });
+        
+        if (!winner) {
             return {
                 fillColor: '#1a1a1a',
                 weight: 1,
@@ -546,251 +451,90 @@
                 fillOpacity: 0.5
             };
         }
-
-        const baseColor = getCandidateColor(stats.winner);
-        const finalColor = getColorForPercentage(stats.percentage, baseColor);
-
+        
+        const percentage = (maxVotes / totalVotes) * 100;
+        const party = winner.match(/\((.*?)\)/)?.[1] || 'DEFAULT';
+        
+        // Cor baseada no partido
+        const partyColors = {
+            'PT': '#E12525', 'PL': '#0056A8', 'PDT': '#F58220',
+            'MDB': '#008000', 'PSDB': '#009EE3', 'DEFAULT': '#64748b'
+        };
+        const baseColor = partyColors[party] || partyColors['DEFAULT'];
+        
+        // Escurecer baseado na porcentagem
+        const intensity = Math.min(percentage / 100, 1);
+        const r = parseInt(baseColor.substr(1, 2), 16);
+        const g = parseInt(baseColor.substr(3, 2), 16);
+        const b = parseInt(baseColor.substr(5, 2), 16);
+        const darkness = 0.7 * intensity;
+        const darkR = Math.max(0, Math.round(r * (1 - darkness)));
+        const darkG = Math.max(0, Math.round(g * (1 - darkness)));
+        const darkB = Math.max(0, Math.round(b * (1 - darkness)));
+        const finalColor = `rgb(${darkR}, ${darkG}, ${darkB})`;
+        
         return {
             fillColor: finalColor,
-            weight: STATE.viewMode === 'BRASIL' ? 1.5 : 0.8,
+            weight: 1.5,
             color: '#111',
             fillOpacity: 0.85
         };
     }
 
-    function updateMapStyle() {
-        if (STATE.layers.brazil) {
-            STATE.layers.brazil.setStyle(getMapStyle);
-        }
-        if (STATE.layers.cities) {
-            STATE.layers.cities.setStyle(getMapStyle);
-        }
-    }
-
     function onEachFeature(feature, layer) {
-        layer.on('click', function() {
-            if (STATE.viewMode === 'BRASIL') {
-                const ufId = feature.properties.id;
-                const ufName = feature.properties.name || feature.properties.sigla;
-                
-                // Atualizar para mostrar apenas candidatos do estado
-                STATE.currentState = ufId;
-                updateCandidatesForState(ufId, ufName);
-                
-                // Carregar municípios
-                loadCities(ufId, ufName);
-            }
-        });
-
         layer.on('mouseover', function(e) {
             this.setStyle({
-                weight: STATE.viewMode === 'BRASIL' ? 2.5 : 1.2,
+                weight: 2.5,
                 color: '#ffffff',
                 fillOpacity: 0.95
             });
             
-            // Tooltip
-            let key, type, name;
+            const ufCode = feature.properties.id;
+            const ufName = feature.properties.name || UF_NAMES[ufCode] || `Estado ${ufCode}`;
             
-            if (STATE.viewMode === 'BRASIL') {
-                key = feature.properties.id;
-                type = 'estados';
-                name = feature.properties.name || feature.properties.sigla;
-            } else {
-                key = feature.properties.codarea || feature.properties.id;
-                type = 'municipios';
-                name = feature.properties.name || feature.properties.nome;
-            }
-            
-            const stats = getStats(key?.toString(), type);
-            
-            if (stats) {
-                let tooltipContent = `<b>${name}</b><br>Vencedor: ${extractCandidateName(stats.winner)}<br>${stats.percentage}%`;
-                layer.bindTooltip(tooltipContent).openTooltip(e.latlng);
+            if (currentData.estados[ufCode]) {
+                // Calcular estatísticas
+                let stats = '';
+                let totalVotes = 0;
+                let ranking = [];
+                
+                Object.entries(currentData.estados[ufCode]).forEach(([candidate, votes]) => {
+                    if (activeCandidates.has(candidate)) {
+                        totalVotes += votes;
+                        ranking.push({ candidate, votes });
+                    }
+                });
+                
+                ranking.sort((a, b) => b.votes - a.votes);
+                
+                stats += `<b>${ufName}</b><br>`;
+                stats += `Total: ${totalVotes.toLocaleString('pt-BR')} votos<br><br>`;
+                
+                ranking.slice(0, 3).forEach((item, idx) => {
+                    const percentage = ((item.votes / totalVotes) * 100).toFixed(2);
+                    const name = item.candidate.split('(')[0].trim();
+                    stats += `${idx + 1}. ${name}: ${percentage}%<br>`;
+                });
+                
+                layer.bindTooltip(stats).openTooltip(e.latlng);
             }
         });
-
+        
         layer.on('mouseout', function() {
-            this.setStyle(getMapStyle(feature));
+            this.setStyle(getStyle(feature));
             this.closeTooltip();
         });
     }
 
-    function updateCandidatesForState(ufId, ufName) {
-        const list = document.getElementById('candList');
-        list.innerHTML = '';
-        STATE.activeCandidates.clear();
-
-        if (!STATE.data || !STATE.data.estados[ufId]) {
-            return;
+    // Adicionar animação CSS
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
-
-        const stateData = STATE.data.estados[ufId];
-        let totalVotos = Object.values(stateData).reduce((a, b) => a + b, 0);
-
-        // Cabeçalho
-        const header = document.createElement('div');
-        header.className = 'cand-row';
-        header.style.background = 'rgba(59, 130, 246, 0.1)';
-        header.innerHTML = `
-            <div style="flex: 1; text-align: center; padding: 8px;">
-                <div style="font-size: 12px; color: rgba(255, 255, 255, 0.7); margin-bottom: 4px;">
-                    ${ufName}
-                </div>
-                <div style="font-size: 16px; font-weight: 700; color: #3b82f6;">
-                    ${totalVotos.toLocaleString('pt-BR')} votos
-                </div>
-            </div>
-        `;
-        list.appendChild(header);
-
-        // Candidatos do estado
-        const sortedCandidates = Object.entries(stateData)
-            .sort((a, b) => b[1] - a[1]);
-
-        sortedCandidates.forEach(([candidate, votes]) => {
-            STATE.activeCandidates.add(candidate);
-            const percentage = totalVotos > 0 ? ((votes / totalVotos) * 100).toFixed(2) : 0;
-            const color = getCandidateColor(candidate);
-            const candidateName = extractCandidateName(candidate);
-
-            const row = document.createElement('div');
-            row.className = 'cand-row';
-            row.innerHTML = `
-                <div class="cand-checkbox checked" onclick="toggleCandidate('${candidate.replace(/'/g, "\\'")}')"></div>
-                <div style="width: 20px; height: 20px; border-radius: 4px; background: ${color};"></div>
-                <div class="cand-info">
-                    <div class="cand-header">
-                        <span class="cand-name" title="${candidate}">${candidateName}</span>
-                        <span class="cand-percentage">${percentage}%</span>
-                    </div>
-                    <div class="cand-sub">
-                        <span>${votes.toLocaleString('pt-BR')} votos</span>
-                        <span>${candidate.match(/\((.*?)\)/)?.[1] || ''}</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${Math.min(100, percentage)}%; background: ${color}"></div>
-                    </div>
-                </div>
-            `;
-            list.appendChild(row);
-        });
-
-        updateMapStyle();
-    }
-
-    async function loadCities(ufId, ufName) {
-        showLoader();
-        
-        try {
-            const url = `https://servicodados.ibge.gov.br/api/v3/malhas/estados/${ufId}?formato=application/vnd.geo+json&qualidade=minima&intrarregiao=municipio`;
-            
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error('Erro ao carregar municípios');
-            }
-            
-            const geoData = await response.json();
-            
-            // Processar features
-            geoData.features.forEach(feature => {
-                if (feature.properties && feature.properties.codarea) {
-                    feature.properties.codarea = feature.properties.codarea.toString();
-                    if (feature.properties.codarea.length === 6) {
-                        feature.properties.codarea = '0' + feature.properties.codarea;
-                    }
-                }
-            });
-
-            // Remover camada antiga
-            if (STATE.layers.brazil) STATE.map.removeLayer(STATE.layers.brazil);
-            
-            STATE.viewMode = 'MUNICIPIOS';
-            STATE.layers.cities = L.geoJson(geoData, {
-                style: getMapStyle,
-                onEachFeature: onEachFeature
-            }).addTo(STATE.map);
-
-            // Ajustar visualização
-            const bounds = STATE.layers.cities.getBounds();
-            if (bounds.isValid()) {
-                STATE.map.fitBounds(bounds, { 
-                    padding: [50, 50],
-                    maxZoom: 9
-                });
-            }
-
-        } catch (error) {
-            console.error('Erro ao carregar municípios:', error);
-            alert(`Não foi possível carregar municípios de ${ufName}`);
-        } finally {
-            hideLoader();
-        }
-    }
-
-    function loadBrazilBase() {
-        showLoader();
-        
-        fetch('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson')
-            .then(response => response.json())
-            .then(data => {
-                data.features.forEach(feature => {
-                    const ufSigla = feature.properties.sigla;
-                    feature.properties.id = CONFIG.ufCodes[ufSigla] || '00';
-                    feature.properties.name = feature.properties.name || ufSigla;
-                });
-
-                STATE.layers.brazil = L.geoJson(data, {
-                    style: getMapStyle,
-                    onEachFeature: onEachFeature
-                }).addTo(STATE.map);
-                
-                hideLoader();
-            })
-            .catch(error => {
-                console.error('Erro ao carregar base:', error);
-                hideLoader();
-            });
-    }
-
-    function resetToBrazil() {
-        if (STATE.layers.cities) {
-            STATE.map.removeLayer(STATE.layers.cities);
-            STATE.layers.cities = null;
-        }
-        
-        if (STATE.layers.brazil) {
-            STATE.layers.brazil.addTo(STATE.map);
-            updateMapStyle();
-        } else {
-            loadBrazilBase();
-        }
-        
-        STATE.viewMode = 'BRASIL';
-        STATE.currentState = null;
-        
-        // Recarregar candidatos nacionais
-        if (STATE.data) {
-            updateCandidatesSidebar();
-        }
-        
-        STATE.map.setView([-15.7, -47.8], 4);
-    }
-
-    function showLoader() {
-        document.getElementById('loader').classList.remove('hidden');
-    }
-
-    function hideLoader() {
-        document.getElementById('loader').classList.add('hidden');
-    }
-
-    // ==================== FUNÇÕES GLOBAIS ====================
-    window.toggleCandidate = toggleCandidate;
-    window.loadData = loadData;
-    window.resetToBrazil = resetToBrazil;
-
-    console.log('✅ Sistema pronto para uso');
+    `;
+    document.head.appendChild(style);
 </script>
 </body>
 </html>
