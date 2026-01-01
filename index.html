@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Atlas Eleitoral V12 - Simulador</title>
+    <title>Atlas Histórico V25</title>
     
-    <!-- Leaflet & Dependências -->
+    <!-- Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    <!-- Fontes e Ícones -->
+    <!-- Fonts/Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
@@ -20,14 +20,12 @@
     <style>
         :root {
             --bg-primary: #0a0c10;
-            --bg-secondary: #151a23;
-            --bg-tertiary: #1c2431;
-            --bg-card: rgba(28, 36, 49, 0.98); /* Mais opaco */
+            --bg-secondary: #11141a;
+            --bg-card: rgba(20, 24, 32, 0.98);
             --accent-blue: #3b82f6;
             --text-primary: #ffffff;
             --text-muted: #94a3b8;
-            --border-color: rgba(255, 255, 255, 0.15);
-            --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            --border-color: rgba(255, 255, 255, 0.1);
             --gradient-primary: linear-gradient(135deg, #3b82f6, #8b5cf6);
         }
 
@@ -42,7 +40,7 @@
 
         #app { width: 100vw; height: 100vh; display: flex; position: relative; }
         
-        /* Mapa agora tem fundo cinza escuro para contraste com as cores opacas */
+        /* Fundo do mapa escuro para contraste */
         #map { flex: 1; height: 100%; background: #1a1a1a; z-index: 1; }
 
         .sidebar {
@@ -50,111 +48,115 @@
             background: var(--bg-card);
             backdrop-filter: blur(20px);
             display: flex; flex-direction: column;
-            z-index: 1000; box-shadow: var(--shadow-lg);
+            z-index: 1000;
             border-right: 1px solid var(--border-color);
+            box-shadow: 5px 0 30px rgba(0,0,0,0.5);
         }
         .sidebar-right { border-left: 1px solid var(--border-color); border-right: none; width: 420px; }
 
         .header {
             padding: 24px;
+            background: linear-gradient(180deg, rgba(10, 12, 16, 1) 0%, rgba(10, 12, 16, 0.8) 100%);
             border-bottom: 1px solid var(--border-color);
-            background: linear-gradient(180deg, rgba(10, 12, 16, 0.95) 0%, rgba(10, 12, 16, 0.8) 100%);
         }
         .header h1 {
             font-size: 1.4rem; font-weight: 800;
             background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
 
-        .controls { padding: 20px; background: var(--bg-secondary); flex: 1; }
-        .controls-grid { display: flex; flex-direction: column; gap: 15px; }
+        .controls { padding: 20px; flex: 1; overflow-y: auto; }
         
-        .control-group label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px; font-weight: 600; }
-
-        select, button {
+        .control-group { margin-bottom: 15px; }
+        .control-group label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        select {
             width: 100%; padding: 12px; border-radius: 8px;
-            border: 1px solid var(--border-color);
-            background: rgba(255, 255, 255, 0.05);
-            color: white; font-family: inherit; font-size: 0.9rem;
+            border: 1px solid #333;
+            background-color: #050505; color: white;
+            font-family: inherit; font-size: 0.9rem;
+            appearance: none; cursor: pointer;
         }
-        button.btn-primary { background: var(--gradient-primary); border: none; font-weight: 700; cursor: pointer; margin-top: 10px; }
-        button.btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        select:focus { border-color: var(--accent-blue); outline: none; }
+        option { background-color: #050505; color: white; padding: 10px; }
 
-        .scroll-container { flex: 1; overflow-y: auto; padding: 15px; }
-        
-        /* Estilo da Lista de Candidatos (Agora na Direita) */
+        button.btn-primary { 
+            width: 100%; padding: 12px; border-radius: 8px;
+            background: var(--gradient-primary); border: none; 
+            font-weight: 700; color: white; cursor: pointer; margin-top: 10px;
+            transition: transform 0.2s;
+        }
+        button.btn-primary:hover { transform: translateY(-2px); }
+
+        button.btn-back {
+            width: 100%; padding: 10px; border-radius: 8px;
+            background: #222; border: 1px solid #444; 
+            color: white; cursor: pointer; margin-bottom: 15px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            font-size: 0.9rem; font-weight: 600;
+        }
+        button.btn-back:hover { background: #333; border-color: var(--accent-blue); }
+
+        /* LISTA DIREITA */
         .cand-row {
             display: flex; align-items: center; gap: 10px;
-            padding: 10px; margin-bottom: 8px;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 8px;
-            transition: all 0.2s;
+            padding: 12px; margin-bottom: 8px;
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 8px; transition: all 0.2s;
         }
-        .cand-row:hover { background: rgba(255,255,255,0.06); }
-        .cand-row.disabled { opacity: 0.5; filter: grayscale(1); }
+        .cand-row:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); }
+        .cand-row.disabled { opacity: 0.4; filter: grayscale(1); }
 
         .cand-check {
-            width: 18px; height: 18px;
-            border: 2px solid var(--text-muted); border-radius: 4px;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; flex-shrink: 0; transition: all 0.2s;
+            width: 18px; height: 18px; border: 2px solid #555; border-radius: 4px;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
         }
-        .cand-check:hover { border-color: white; }
         .cand-check.checked { background: var(--accent-blue); border-color: var(--accent-blue); }
-        .cand-check.checked::after { content: '✓'; font-size: 12px; font-weight: 900; color: white; }
-
-        .cand-color { width: 18px; height: 18px; border-radius: 4px; flex-shrink: 0; cursor: pointer; border: 1px solid rgba(255,255,255,0.3); }
+        .cand-check.checked::after { content: '✓'; color: white; font-size: 12px; font-weight: 900; }
+        .cand-color { width: 18px; height: 18px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.5); cursor: pointer; }
         .cand-info { flex: 1; min-width: 0; }
-        
-        .cand-header { display: flex; justify-content: space-between; align-items: baseline; }
-        .cand-name { font-weight: 600; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
-        .cand-pct { font-weight: 700; font-size: 0.9rem; color: var(--accent-blue); }
-        .cand-votes { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
-
+        .cand-head { display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 600; margin-bottom: 2px; }
+        .cand-sub { font-size: 0.75rem; color: var(--text-muted); display: flex; justify-content: space-between; }
         .progress-bar { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 6px; overflow: hidden; }
         .progress-fill { height: 100%; transition: width 0.5s ease; }
 
+        /* LEGENDA */
         .legend {
             position: absolute; bottom: 30px; right: 450px;
-            background: rgba(10, 12, 16, 0.95); padding: 15px;
-            border-radius: 12px; border: 1px solid var(--border-color);
-            z-index: 999; backdrop-filter: blur(10px);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            background: #0a0c10; padding: 15px; border: 1px solid #333;
+            border-radius: 12px; z-index: 999; box-shadow: 0 10px 40px rgba(0,0,0,0.8);
         }
-        .legend-grid { display: flex; gap: 0; margin-bottom: 5px; width: 220px; height: 20px; border-radius: 4px; overflow: hidden; border: 1px solid rgba(255,255,255,0.2); }
-        .legend-item { flex: 1; height: 100%; }
-        .legend-labels { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-muted); margin-top: 5px; font-weight: 600; }
+        .legend-grid { display: flex; height: 20px; width: 220px; border-radius: 4px; overflow: hidden; border: 1px solid #444; }
+        .legend-item { flex: 1; }
 
         .map-controls {
             position: absolute; top: 20px; right: 450px;
             display: flex; flex-direction: column; gap: 8px; z-index: 999;
         }
         .map-btn {
-            width: 40px; height: 40px; border-radius: 8px;
-            background: rgba(10, 12, 16, 0.9); border: 1px solid var(--border-color);
-            color: white; cursor: pointer; display: flex; align-items: center; justify-content: center;
-            font-size: 1.2rem;
+            width: 40px; height: 40px; background: #0a0c10; border: 1px solid #333;
+            color: #ddd; display: flex; align-items: center; justify-content: center;
+            border-radius: 8px; cursor: pointer; font-size: 1.2rem;
         }
-        .map-btn:hover { background: var(--accent-blue); border-color: var(--accent-blue); }
+        .map-btn:hover { background: #222; color: white; }
 
+        /* TOOLTIP */
         .custom-tooltip {
-            background: rgba(10, 12, 16, 0.98); border: 1px solid var(--border-color);
-            color: white; padding: 0; border-radius: 8px; font-family: 'Inter', sans-serif;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); pointer-events: none;
+            background: #0a0c10; border: 1px solid #333; color: white;
+            border-radius: 8px; font-family: 'Inter', sans-serif; padding: 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
         }
-        .tt-head { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: 700; background: linear-gradient(90deg, rgba(59,130,246,0.2), transparent); border-radius: 8px 8px 0 0;}
-        .tt-body { padding: 10px 12px; }
+        .tt-head { background: #151a23; padding: 10px; font-weight: 700; border-bottom: 1px solid #333; border-radius: 8px 8px 0 0; }
+        .tt-body { padding: 10px; }
 
         #loader {
-            position: absolute; inset: 0; background: rgba(10,12,16,0.95);
-            z-index: 9999; display: flex; align-items: center; justify-content: center;
-            flex-direction: column; transition: opacity 0.3s;
+            position: absolute; inset: 0; background: rgba(5,5,5,0.95); z-index: 9999;
+            display: flex; align-items: center; justify-content: center; flex-direction: column;
+            transition: opacity 0.3s;
         }
         .hidden { opacity: 0; pointer-events: none; }
         .spinner {
-            width: 50px; height: 50px; border: 4px solid rgba(59,130,246,0.3);
-            border-top-color: var(--accent-blue); border-radius: 50%;
-            animation: spin 1s linear infinite; margin-bottom: 15px;
+            width: 50px; height: 50px; border: 4px solid #333; border-top-color: var(--accent-blue);
+            border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
@@ -167,90 +169,95 @@
 </div>
 
 <div id="app">
-    <!-- Sidebar Esquerda: Apenas Filtros -->
+    <!-- BARRA ESQUERDA -->
     <aside class="sidebar">
         <div class="header">
-            <h1>Atlas Eleitoral V12</h1>
-            <div style="font-size: 0.8rem; color: var(--text-muted);">Simulador de Cenários</div>
+            <h1>Atlas V25</h1>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">Histórico 1994 - 2022</div>
         </div>
         
         <div class="controls">
-            <div class="controls-grid">
-                <div class="control-group">
-                    <label>ANO</label>
-                    <select id="yearSelect"><option value="2022">2022</option></select>
-                </div>
-                <div class="control-group">
-                    <label>TURNO</label>
-                    <select id="turnSelect">
-                        <option value="1">1º Turno</option>
-                        <option value="2">2º Turno</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <label>CARGO</label>
-                    <select id="roleSelect">
-                        <option value="president">Presidente</option>
-                        <option value="governor">Governador</option>
-                        <option value="senator">Senador</option>
-                    </select>
-                </div>
-                <button class="btn-primary" onclick="app.loadData()">CARREGAR DADOS</button>
-                
-                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
-                
-                <button onclick="app.resetMap()" style="background: var(--bg-tertiary);">
-                    <i class="fas fa-globe-americas"></i> Visão Brasil
-                </button>
+            <div class="control-group">
+                <label>ANO</label>
+                <select id="yearSelect">
+                    <option value="2022">2022</option>
+                    <option value="2018">2018</option>
+                    <option value="2014">2014</option>
+                    <option value="2010">2010</option>
+                    <option value="2006">2006</option>
+                    <option value="2002">2002</option>
+                    <option value="1998">1998</option>
+                    <option value="1994">1994</option>
+                </select>
             </div>
-        </div>
-        
-        <div style="padding: 20px; color: var(--text-muted); font-size: 0.8rem; text-align: center; border-top: 1px solid var(--border-color);">
-            <i class="fas fa-info-circle"></i><br>
-            Selecione uma região no mapa para ver detalhes. Use a barra direita para simular cenários.
+            
+            <div class="control-group">
+                <label>TURNO</label>
+                <select id="turnSelect">
+                    <option value="1">1º Turno</option>
+                    <option value="2">2º Turno</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>CARGO</label>
+                <select id="roleSelect">
+                    <option value="president">Presidente</option>
+                    <option value="governor">Governador</option>
+                    <option value="senator">Senador</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>VISUALIZAÇÃO</label>
+                <select id="viewModeSelect">
+                    <option value="states">Por Estados (Brasil)</option>
+                    <option value="all_cities">Brasil Municipal</option>
+                </select>
+            </div>
+
+            <button class="btn-primary" onclick="app.loadData()">CARREGAR MAPA</button>
         </div>
     </aside>
 
     <div id="map"></div>
 
-    <!-- Sidebar Direita: Resultados e Controles -->
+    <!-- BARRA DIREITA -->
     <aside class="sidebar sidebar-right">
         <div class="header">
             <h2 id="regionName">Brasil</h2>
-            <div style="font-size: 0.8rem; color: var(--accent-blue);" id="regionType">Resultado Simulado</div>
-        </div>
-        
-        <!-- Totalizador -->
-        <div id="totalBox" style="padding: 15px 20px; background: rgba(59,130,246,0.1); border-bottom: 1px solid var(--border-color);">
-            <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Total de Votos (Ativos)</div>
-            <div id="totalVotesVal" style="font-size: 1.5rem; font-weight: 800; color: white;">-</div>
+            <div style="font-size: 0.8rem; color: var(--accent-blue);" id="regionType">Nacional</div>
         </div>
 
-        <div class="scroll-container" id="resultsContainer">
-            <!-- AQUI FICAM OS CANDIDATOS, CORES E CHECKBOXES -->
+        <div style="padding: 15px; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border-color);">
+            
+            <!-- BOTÃO DE VOLTAR -->
+            <button id="btnBack" class="btn-back" style="display: none;" onclick="app.resetSelection()">
+                <i class="fas fa-arrow-left"></i> Voltar para o Brasil
+            </button>
+
+            <div style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted);">Votos Totais</div>
+            <div id="totalVotesVal" style="font-size: 1.4rem; font-weight: 800; color: white;">-</div>
+        </div>
+
+        <div class="controls" id="resultsContainer">
+            <!-- LISTA -->
         </div>
     </aside>
 
     <div class="map-controls">
-        <div class="map-btn" onclick="app.map.zoomIn()" title="Zoom +">+</div>
-        <div class="map-btn" onclick="app.map.zoomOut()" title="Zoom -">-</div>
+        <div class="map-btn" onclick="app.map.zoomIn()">+</div>
+        <div class="map-btn" onclick="app.map.zoomOut()">-</div>
     </div>
 
-    <!-- Legenda Atualizada (Degraus Opacos) -->
+    <!-- LEGENDA -->
     <div class="legend">
         <div style="font-size: 0.8rem; margin-bottom: 8px; font-weight: 700; color: white;">
-            Intensidade do Voto
+            Percentual do Vencedor
         </div>
-        <div class="legend-grid" id="legendColors">
-            <!-- Gerado via JS -->
-        </div>
-        <div class="legend-labels">
-            <span>0%</span>
-            <span>50%</span>
-            <span>100%</span>
-        </div>
-        <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 5px; text-align: center;">
-            Cores sólidas (sem transparência)
+        <div class="legend-grid" id="legendColors"></div>
+        <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:#aaa; margin-top:5px;">
+            <span>0% (Claro)</span><span>100% (Saturado)</span>
         </div>
     </div>
 </div>
@@ -263,46 +270,40 @@ const CONFIG = {
         'PP': '#0066CC', 'NOVO': '#F58220', 'REPUBLICANOS': '#0066CC',
         'SOLIDARIEDADE': '#F58220', 'PATRIOTA': '#FFD700', 'PCdoB': '#FF0000',
         'PV': '#00FF00', 'CIDADANIA': '#FFA500', 'AVANTE': '#800080',
-        'PROS': '#FF1493', 'PMB': '#8B4513', 'DC': '#A52A2A',
-        'PSTU': '#FF4500', 'PCB': '#FF0000', 'UP': '#8B0000', 'PSOL': '#FFCC00',
-        'OUTROS': '#808080', 'DEFAULT': '#64748b'
+        'PRONA': '#006400', 'PFL': '#0056A8', 'PMDB': '#008000', 'PSOL': '#FFCC00',
+        'OUTROS': '#666666', 'DEFAULT': '#555555'
     }
 };
 
 const app = {
     map: null,
     layers: { brazil: null, cities: null },
-    data: { full: null, current: null },
+    data: { full: null, current: null, names: {} },
     state: {
-        view: 'BRASIL', 
-        selectedRegionId: null, 
-        selectedRegionName: "Brasil",
-        ignoredCandidates: new Set(),
-        customColors: JSON.parse(localStorage.getItem('v12_colors') || '{}')
+        view: 'states', 
+        selectedId: null,
+        selectedName: "Brasil",
+        ignored: new Set(),
+        customColors: JSON.parse(localStorage.getItem('v25_colors') || '{}')
     },
 
     init: () => {
         app.map = L.map('map', {
-            center: [-15.7, -47.8], zoom: 4, zoomControl: false,
+            center: [-15, -50], zoom: 4, zoomControl: false,
             preferCanvas: true, background: '#1a1a1a'
         });
         
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            attribution: '', maxZoom: 18, minZoom: 3, opacity: 0.5
+            opacity: 0.4
         }).addTo(app.map);
 
-        // Renderizar Legenda (Degraus Opacos)
+        // LEGENDA EM DEGRAUS DE ALTO CONTRASTE
         const legendDiv = document.getElementById('legendColors');
-        // Exemplo com cor Neutra (Cinza) para a legenda
-        const baseLegendColor = "#ffffff"; 
         for(let i=0; i<10; i++) {
             const el = document.createElement('div');
             el.className = 'legend-item';
-            // Usa a mesma função de clarear que o mapa usa
-            // Degrau 0 = Muito claro, Degrau 9 = Cor Pura
-            // Passamos uma cor cinza médio para exemplificar
-            el.style.background = app.getSteppedColor('#666666', (i*10)+5);
-            el.title = `${i*10}% - ${(i+1)*10}%`;
+            // Exemplo Cinza para Legenda
+            el.style.background = app.getGradientColor('#666666', (i*10)+5); 
             legendDiv.appendChild(el);
         }
 
@@ -310,316 +311,312 @@ const app = {
         app.loadData();
     },
 
-    // --- LÓGICA DE CORES OPAQUE ---
-    // Mistura a cor com Branco baseada na porcentagem
-    getSteppedColor: (hexColor, pct) => {
-        // Degraus de 10 em 10
-        const step = Math.floor(pct / 10); // 0 a 9 (ou 10 se 100%)
+    // --- NOVA LÓGICA DE DEGRADÊ (ALTO CONTRASTE) ---
+    getGradientColor: (hex, pct) => {
+        const step = Math.floor(pct / 10); // 0 a 9
         
-        // Fator de mistura com branco (0 a 1)
-        // Se step 9 (90%+), factor = 0 (Cor pura)
-        // Se step 0 (0-10%), factor = 0.85 (Quase branco)
-        const whiteFactor = 0.85 - (step * (0.85 / 9));
+        // 0-10% (step 0): Mistura com 90% Branco -> Quase Branco
+        // 90-100% (step 9): Mistura com 0% Branco -> Cor Pura
+        // Isso força um degradê bem visível.
+        const whiteMix = 0.9 - (Math.min(step, 9) * 0.1); 
         
-        return app.mixWithWhite(hexColor, Math.max(0, whiteFactor));
+        return app.mixColor(hex, '#ffffff', Math.max(0, whiteMix));
     },
 
-    mixWithWhite: (hex, amount) => {
-        let r = 0, g = 0, b = 0;
-        if (hex.length == 4) {
-            r = "0x" + hex[1] + hex[1];
-            g = "0x" + hex[2] + hex[2];
-            b = "0x" + hex[3] + hex[3];
-        } else if (hex.length == 7) {
-            r = "0x" + hex[1] + hex[2];
-            g = "0x" + hex[3] + hex[4];
-            b = "0x" + hex[5] + hex[6];
-        }
+    mixColor: (hex1, hex2, amount) => {
+        const c1 = app.hexToRgb(hex1);
+        const c2 = app.hexToRgb(hex2); // Cor de mistura (Branco)
         
-        // Mistura
-        r = Math.round(+r + (255 - +r) * amount);
-        g = Math.round(+g + (255 - +g) * amount);
-        b = Math.round(+b + (255 - +b) * amount);
-
+        const r = Math.round(c1.r + (c2.r - c1.r) * amount);
+        const g = Math.round(c1.g + (c2.g - c1.g) * amount);
+        const b = Math.round(c1.b + (c2.b - c1.b) * amount);
+        
         return `rgb(${r}, ${g}, ${b})`;
+    },
+
+    hexToRgb: (hex) => {
+        let c = hex.substring(1).split('');
+        if(c.length==3) c= [c[0], c[0], c[1], c[1], c[2], c[2]];
+        c = '0x'+c.join('');
+        return { r: (c>>16)&255, g: (c>>8)&255, b: c&255 };
     },
 
     loadData: async () => {
         const loader = document.getElementById('loader');
         loader.classList.remove('hidden');
-        app.state.ignoredCandidates.clear();
+        app.state.ignored.clear();
         
         const year = document.getElementById('yearSelect').value;
         const role = document.getElementById('roleSelect').value;
         const turn = document.getElementById('turnSelect').value;
-        
+        const viewMode = document.getElementById('viewModeSelect').value;
+
         try {
-            const response = await fetch(`data/${year}_${role}.json`);
-            if(!response.ok) throw new Error("Arquivo não encontrado.");
-            const json = await response.json();
+            const res = await fetch(`data/${year}_${role}.json`);
+            if(!res.ok) throw new Error("Dados não encontrados.");
+            const json = await res.json();
             
             if(!json[turn]) {
                 alert("Turno indisponível.");
                 app.data.current = null;
             } else {
+                app.data.full = json;
                 app.data.current = json[turn];
-                app.refreshAll();
+                app.data.names = json[turn].meta_nomes || {};
+                
+                if (viewMode === 'all_cities') await app.loadAllMunicipalities();
+                else app.resetMapToStates();
+                
+                app.refreshUI();
             }
         } catch (e) {
             console.error(e);
-            alert("Erro ao carregar dados. Verifique o console.");
+            alert("Erro: " + e.message);
         } finally {
             loader.classList.add('hidden');
         }
     },
 
-    recalcStats: (votesObj) => {
-        if(!votesObj) return null;
-        let total = 0, maxVotes = -1, winner = null;
-        let ranking = [];
+    loadAllMunicipalities: async () => {
+        const loader = document.getElementById('loader');
+        loader.querySelector('h3').textContent = "Carregando Malha Municipal...";
+        loader.classList.remove('hidden');
 
-        Object.entries(votesObj).forEach(([cand, votes]) => {
-            // Se não estiver ignorado, conta
-            if(!app.state.ignoredCandidates.has(cand)) {
-                total += votes;
-                ranking.push({ cand, votes });
-                if(votes > maxVotes) { maxVotes = votes; winner = cand; }
-            } else {
-                // Se estiver ignorado, adiciona com 0 votes para UI
-                ranking.push({ cand, votes: 0, ignored: true, originalVotes: votes });
-            }
-        });
+        try {
+            if(app.layers.cities) app.map.removeLayer(app.layers.cities);
+            if(app.layers.brazil) app.map.removeLayer(app.layers.brazil);
 
-        if(total === 0 && ranking.filter(r => !r.ignored).length === 0) return null;
-        
-        ranking.sort((a,b) => (b.ignored ? -1 : b.votes) - (a.ignored ? -1 : a.votes));
+            const url = "https://raw.githubusercontent.com/tbrugz/geodata-br/master/geojson/geojs-100-mun.json";
+            const res = await fetch(url);
+            const data = await res.json();
 
-        return {
-            winner, votes: maxVotes, total,
-            pct: total > 0 ? (maxVotes / total) * 100 : 0,
-            ranking: ranking.map(r => ({ 
-                ...r, 
-                pct: total > 0 && !r.ignored ? (r.votes / total) * 100 : 0 
-            }))
-        };
-    },
-
-    refreshAll: () => {
-        app.updateMapStyle();
-        app.updateSidebarRight();
-    },
-
-    // Essa função agora é o coração da UI (Barra Direita)
-    updateSidebarRight: () => {
-        const container = document.getElementById('resultsContainer');
-        const titleEl = document.getElementById('regionName');
-        const typeEl = document.getElementById('regionType');
-        const totalEl = document.getElementById('totalVotesVal');
-        
-        container.innerHTML = '';
-
-        // Determinar Fonte de Dados
-        let rawVotes = {};
-        let regionTitle = "Brasil";
-        let regionType = "Nacional";
-
-        if(app.state.view === 'BRASIL' && !app.state.selectedRegionId) {
-            // Agregado Nacional
-            if(app.data.current) {
-                Object.values(app.data.current.estados).forEach(state => {
-                    Object.entries(state).forEach(([c, v]) => rawVotes[c] = (rawVotes[c] || 0) + v);
-                });
-            }
-        } else {
-            // Regional
-            const scope = app.state.view === 'MUNICIPIO' ? 'municipios' : 'estados';
-            if(app.data.current) rawVotes = app.data.current[scope][app.state.selectedRegionId] || {};
-            regionTitle = app.state.selectedRegionName;
-            regionType = app.state.view === 'MUNICIPIO' ? "Município" : "Estado";
-        }
-
-        titleEl.textContent = regionTitle;
-        typeEl.textContent = regionType;
-
-        // Calcular Estatísticas
-        // IMPORTANTE: Precisamos listar TODOS os candidatos relevantes, não só os que tiveram voto nesta cidade
-        // Para isso, pegamos a lista global de candidatos ativos no Brasil para garantir que todos apareçam na lista de controle
-        const allCandidates = new Set([...Object.keys(rawVotes)]);
-        // Adicionar candidatos que podem ter 0 votos aqui mas existem nacionalmente (para simulação)
-        // (Simplificação: usamos apenas os locais + ignorados globais para não poluir muito em cidades pequenas)
-        app.state.ignoredCandidates.forEach(c => allCandidates.add(c));
-
-        // Recriar objeto para o recalcStats
-        const cleanVotes = {};
-        allCandidates.forEach(c => cleanVotes[c] = rawVotes[c] || 0);
-
-        const stats = app.recalcStats(cleanVotes);
-
-        if(!stats) {
-            totalEl.textContent = "0";
-            container.innerHTML = '<div style="padding:20px;text-align:center;color:#666">Sem dados</div>';
-            return;
-        }
-
-        totalEl.textContent = stats.total.toLocaleString('pt-BR');
-
-        // Renderizar Lista
-        stats.ranking.forEach(r => {
-            const { name, party } = app.parseCandKey(r.cand);
-            const color = app.getCandColor(party);
-            const isIgnored = r.ignored;
+            app.layers.cities = L.geoJSON(data, {
+                style: (f) => app.getStyle(f, 'municipios'),
+                onEachFeature: (f, layer) => {
+                    const id = f.properties.id || f.properties.codarea;
+                    const name = app.data.names[id] || f.properties.name;
+                    layer.on('click', (e) => {
+                        L.DomEvent.stopPropagation(e);
+                        app.selectRegion(id, name);
+                    });
+                    app.bindTooltip(layer, id, 'municipios', name);
+                }
+            }).addTo(app.map);
             
-            const div = document.createElement('div');
-            div.className = `cand-row ${isIgnored ? 'disabled' : ''}`;
-            
-            div.innerHTML = `
-                <div class="cand-check ${isIgnored ? '' : 'checked'}"></div>
-                <div class="cand-color" style="background:${color}"></div>
-                <div class="cand-info">
-                    <div class="cand-header">
-                        <span class="cand-name" title="${name}">${name}</span>
-                        <span class="cand-pct">${isIgnored ? '--' : r.pct.toFixed(2)+'%'}</span>
-                    </div>
-                    <div class="cand-votes">
-                        ${party} • ${isIgnored ? (r.originalVotes||0).toLocaleString() + ' (orig)' : r.votes.toLocaleString()}
-                    </div>
-                    ${!isIgnored ? `
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width:${r.pct}%; background:${color}"></div>
-                        </div>
-                    ` : ''}
-                </div>
-            `;
+            app.state.view = 'all_cities';
+            app.map.fitBounds(app.layers.cities.getBounds());
 
-            // Evento Checkbox (Simulação)
-            div.querySelector('.cand-check').onclick = () => {
-                app.toggleCandidate(r.cand);
-            };
-
-            // Evento Color Picker
-            div.querySelector('.cand-color').onclick = (e) => {
-                e.stopPropagation();
-                app.openColorPicker(party, color, e.target);
-            };
-
-            container.appendChild(div);
-        });
+        } catch(e) { alert("Erro ao carregar malha."); } 
+        finally { loader.classList.add('hidden'); app.updateSidebarRight(); }
     },
 
-    toggleCandidate: (cand) => {
-        if(app.state.ignoredCandidates.has(cand)) {
-            app.state.ignoredCandidates.delete(cand);
-        } else {
-            app.state.ignoredCandidates.add(cand);
-        }
-        app.refreshAll();
-    },
-
-    getStyle: (feature, scope = 'estados') => {
-        if(!app.data.current) return { fillColor: '#1a1a1a', weight: 1, color: '#333' };
-
-        const id = feature.properties.id;
-        const rawData = app.data.current[scope][id];
-        const stats = app.recalcStats(rawData);
-
-        if (!stats || !stats.winner) {
-            return { fillColor: '#222', weight: 1, color: '#333', fillOpacity: 1 };
-        }
-
-        const { party } = app.parseCandKey(stats.winner);
-        const baseColor = app.getCandColor(party);
-        
-        // COR SÓLIDA baseada no Degrau
-        const finalColor = app.getSteppedColor(baseColor, stats.pct);
-
-        return {
-            fillColor: finalColor,
-            weight: scope === 'estados' ? 1.2 : 0.5,
-            color: '#000', // Borda preta fina para separar regiões opacas
-            fillOpacity: 1 // TOTALMENTE OPACO
-        };
+    resetMapToStates: () => {
+        if(app.layers.cities) app.map.removeLayer(app.layers.cities);
+        app.loadBrazilLayer();
+        app.state.view = 'states';
+        app.resetSelection();
     },
 
     loadBrazilLayer: async () => {
+        if(app.layers.brazil) {
+            app.layers.brazil.addTo(app.map);
+            app.layers.brazil.setStyle((f) => app.getStyle(f, 'estados'));
+            return;
+        }
         const res = await fetch('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson');
         const data = await res.json();
-        
         const ufMap = {'AC':'12','AL':'27','AM':'13','AP':'16','BA':'29','CE':'23','DF':'53','ES':'32','GO':'52','MA':'21','MG':'31','MS':'50','MT':'51','PA':'15','PB':'25','PE':'26','PI':'22','PR':'41','RJ':'33','RN':'24','RO':'11','RR':'14','RS':'43','SC':'42','SE':'28','SP':'35','TO':'17'};
-        
-        data.features.forEach(f => {
-            f.properties.id = ufMap[f.properties.sigla];
-        });
+        data.features.forEach(f => f.properties.id = ufMap[f.properties.sigla]);
 
-        if(app.layers.brazil) app.map.removeLayer(app.layers.brazil);
-        
         app.layers.brazil = L.geoJSON(data, {
             style: (f) => app.getStyle(f, 'estados'),
-            onEachFeature: (feature, layer) => {
-                layer.on('click', () => {
-                    app.state.selectedRegionId = feature.properties.id;
-                    app.state.selectedRegionName = feature.properties.name;
-                    app.loadCities(feature.properties.id, feature.properties.sigla);
-                    app.updateSidebarRight();
+            onEachFeature: (f, l) => {
+                l.on('click', () => {
+                    if(app.state.view === 'states') app.loadStateCities(f.properties.id, f.properties.name);
+                    else app.selectRegion(f.properties.id, f.properties.name);
                 });
-                app.bindTooltip(layer, feature.properties.id, 'estados', feature.properties.name);
+                app.bindTooltip(l, f.properties.id, 'estados', f.properties.name);
             }
         }).addTo(app.map);
     },
 
-    loadCities: async (ufId, ufSigla) => {
+    loadStateCities: async (ufId, ufName) => {
         const loader = document.getElementById('loader');
         loader.classList.remove('hidden');
-        
         try {
             const url = `https://servicodados.ibge.gov.br/api/v3/malhas/estados/${ufId}?formato=application/vnd.geo+json&qualidade=minima&intrarregiao=municipio`;
             const res = await fetch(url);
             const data = await res.json();
-            
-            data.features.forEach(f => {
-                if(f.properties.codarea) f.properties.id = f.properties.codarea;
-            });
 
             if(app.layers.cities) app.map.removeLayer(app.layers.cities);
             if(app.layers.brazil) app.map.removeLayer(app.layers.brazil);
 
             app.layers.cities = L.geoJSON(data, {
                 style: (f) => app.getStyle(f, 'municipios'),
-                onEachFeature: (feature, layer) => {
-                    layer.on('click', (e) => {
+                onEachFeature: (f, l) => {
+                    const id = f.properties.codarea;
+                    const name = app.data.names[id] || f.properties.name;
+                    l.on('click', (e) => {
                         L.DomEvent.stopPropagation(e);
-                        app.state.selectedRegionId = feature.properties.id;
-                        app.state.selectedRegionName = feature.properties.name;
-                        app.updateSidebarRight();
+                        app.selectRegion(id, name);
                     });
-                    app.bindTooltip(layer, feature.properties.id, 'municipios', feature.properties.name);
+                    app.bindTooltip(l, id, 'municipios', name);
                 }
             }).addTo(app.map);
-
+            
             app.map.fitBounds(app.layers.cities.getBounds());
-            app.state.view = 'MUNICIPIO';
-        } catch (e) {
-            console.error(e);
-        } finally {
-            loader.classList.add('hidden');
-        }
+            app.selectRegion(ufId, ufName);
+
+        } catch(e) { console.error(e); } 
+        finally { loader.classList.add('hidden'); }
     },
 
-    resetMap: () => {
-        if(app.layers.cities) app.map.removeLayer(app.layers.cities);
-        if(app.layers.brazil) app.layers.brazil.addTo(app.map);
-        app.map.setView([-15.7, -47.8], 4);
-        app.state.view = 'BRASIL';
-        app.state.selectedRegionId = null;
-        app.state.selectedRegionName = "Brasil";
+    selectRegion: (id, name) => {
+        app.state.selectedId = id;
+        app.state.selectedName = name;
+        document.getElementById('btnBack').style.display = 'flex';
+        app.refreshUI();
+    },
+
+    resetSelection: () => {
+        app.state.selectedId = null;
+        app.state.selectedName = "Brasil";
+        document.getElementById('btnBack').style.display = 'none';
+        
+        if(app.state.view === 'states' && app.layers.cities) {
+            app.map.removeLayer(app.layers.cities);
+            app.layers.brazil.addTo(app.map);
+            app.map.setView([-15, -50], 4);
+        }
+        app.refreshUI();
+    },
+
+    refreshUI: () => {
+        if(app.layers.brazil) app.layers.brazil.setStyle((f) => app.getStyle(f, 'estados'));
+        if(app.layers.cities) app.layers.cities.setStyle((f) => app.getStyle(f, 'municipios'));
         app.updateSidebarRight();
+    },
+
+    updateSidebarRight: () => {
+        const container = document.getElementById('resultsContainer');
+        const titleEl = document.getElementById('regionName');
+        const totalEl = document.getElementById('totalVotesVal');
+        
+        container.innerHTML = '';
+        titleEl.textContent = app.state.selectedName;
+
+        let rawVotes = {};
+        
+        // CORREÇÃO: Removemos a restrição de 'all_cities'
+        // Se nada estiver selecionado, SEMPRE soma os estados para o total nacional
+        if (!app.state.selectedId) {
+             if(app.data.current) {
+                Object.values(app.data.current.estados).forEach(st => {
+                    Object.entries(st).forEach(([c, v]) => rawVotes[c] = (rawVotes[c]||0)+v);
+                });
+             }
+        } else {
+            // Se tiver seleção, busca específico
+            const scope = (app.state.selectedId.length === 2) ? 'estados' : 'municipios';
+            rawVotes = app.data.current[scope][app.state.selectedId] || {};
+        }
+
+        const allCands = new Set([...Object.keys(rawVotes), ...app.state.ignored]);
+        const cleanVotes = {};
+        allCands.forEach(c => cleanVotes[c] = rawVotes[c] || 0);
+
+        const stats = app.recalcStats(cleanVotes);
+
+        if(!stats) {
+            totalEl.textContent = "0";
+            container.innerHTML = '<div style="color:#666;text-align:center;">Sem dados</div>';
+            return;
+        }
+
+        totalEl.textContent = stats.total.toLocaleString('pt-BR');
+
+        stats.ranking.forEach(r => {
+            const { name, party } = app.parseCandKey(r.cand);
+            const color = app.getCandColor(party);
+            const isIgnored = r.ignored;
+
+            const div = document.createElement('div');
+            div.className = `cand-row ${isIgnored ? 'disabled' : ''}`;
+            div.innerHTML = `
+                <div class="cand-check ${isIgnored ? '' : 'checked'}"></div>
+                <div class="cand-color" style="background:${color}"></div>
+                <div class="cand-info">
+                    <div class="cand-head">
+                        <span>${name}</span>
+                        <span style="color:${color}">${isIgnored ? '--' : r.pct.toFixed(2)+'%'}</span>
+                    </div>
+                    <div class="cand-sub">
+                        <span>${party}</span>
+                        <span>${isIgnored ? (r.orig||0).toLocaleString() : r.votes.toLocaleString()}</span>
+                    </div>
+                    ${!isIgnored ? `<div class="progress-bar"><div class="progress-fill" style="width:${r.pct}%; background:${color}"></div></div>` : ''}
+                </div>
+            `;
+            
+            div.querySelector('.cand-check').onclick = () => {
+                if(app.state.ignored.has(r.cand)) app.state.ignored.delete(r.cand);
+                else app.state.ignored.add(r.cand);
+                app.refreshUI();
+            };
+            div.querySelector('.cand-color').onclick = (e) => {
+                e.stopPropagation();
+                app.openColorPicker(party, color, e.target);
+            };
+            container.appendChild(div);
+        });
+    },
+
+    recalcStats: (votes) => {
+        let total = 0, max = -1, winner = null;
+        let rank = [];
+        Object.entries(votes).forEach(([c, v]) => {
+            if(!app.state.ignored.has(c)) {
+                total += v;
+                if(v > max) { max = v; winner = c; }
+                rank.push({ cand: c, votes: v, pct: 0 });
+            } else {
+                rank.push({ cand: c, votes: 0, pct: 0, ignored: true, orig: v });
+            }
+        });
+        if(total === 0 && rank.filter(x=>!x.ignored).length === 0) return null;
+        rank.forEach(r => { if(!r.ignored) r.pct = (r.votes/total)*100; });
+        rank.sort((a,b) => (b.ignored?-1:b.votes) - (a.ignored?-1:a.votes));
+        return { total, winner, pct: winner ? (max/total)*100 : 0, ranking: rank };
+    },
+
+    getStyle: (feature, scope) => {
+        if(!app.data.current) return { fillColor: '#111', weight: 1, color: '#000' };
+        
+        const id = feature.properties.id || feature.properties.codarea; 
+        const raw = app.data.current[scope][id];
+        const stats = app.recalcStats(raw || {});
+
+        if (!stats || !stats.winner) {
+            return { fillColor: '#222', weight: 0.5, color: '#000', fillOpacity: 1 };
+        }
+
+        const { party } = app.parseCandKey(stats.winner);
+        const color = app.getGradientColor(app.getCandColor(party), stats.pct);
+
+        return {
+            fillColor: color,
+            weight: scope === 'estados' ? 0.5 : 0.25,
+            color: '#ffffff', // Contorno preto
+            fillOpacity: 1    // Opaco
+        };
     },
 
     bindTooltip: (layer, id, scope, name) => {
         layer.bindTooltip(() => {
-            const rawData = app.data.current[scope][id];
-            const stats = app.recalcStats(rawData);
+            const raw = app.data.current[scope][id];
+            const stats = app.recalcStats(raw || {});
             
-            if(!stats) return "Sem dados";
+            if(!stats) return `<div class="custom-tooltip"><div class="tt-head">${name}</div><div class="tt-body">Sem dados</div></div>`;
             
             const { name: wName, party } = app.parseCandKey(stats.winner);
             const color = app.getCandColor(party);
@@ -628,13 +625,10 @@ const app = {
                 <div class="custom-tooltip">
                     <div class="tt-head">${name}</div>
                     <div class="tt-body">
-                        <div style="font-size:0.8rem; color:var(--text-muted)">Líder (Simulado)</div>
-                        <div style="color:${color}; font-weight:800; font-size:1rem;">
-                            ${wName}
-                        </div>
-                        <div style="display:flex; gap:10px; margin-top:4px;">
-                            <span>${stats.pct.toFixed(1)}%</span>
-                            <span style="opacity:0.7">${stats.votes.toLocaleString()} votos</span>
+                        <div style="font-size:0.75rem; color:#aaa">Vencedor</div>
+                        <div style="color:${color}; font-weight:800; font-size:1rem;">${wName}</div>
+                        <div style="margin-top:4px;">
+                            ${stats.pct.toFixed(1)}% <span style="font-size:0.8rem; opacity:0.7">(${stats.ranking[0].votes.toLocaleString()})</span>
                         </div>
                     </div>
                 </div>
@@ -642,31 +636,24 @@ const app = {
         }, { sticky: true, direction: 'top' });
     },
 
-    updateMapStyle: () => {
-        if(app.layers.brazil) app.layers.brazil.setStyle((f) => app.getStyle(f, 'estados'));
-        if(app.layers.cities) app.layers.cities.setStyle((f) => app.getStyle(f, 'municipios'));
+    parseCandKey: (k) => {
+        const m = k.match(/(.*?)\s*\((.*?)\)/);
+        return m ? { name: m[1], party: m[2] } : { name: k, party: 'DEFAULT' };
     },
 
-    parseCandKey: (key) => {
-        const match = key.match(/(.*?)\s*\((.*?)\)/);
-        if(match) return { name: match[1], party: match[2] };
-        return { name: key, party: 'DEFAULT' };
-    },
-    
-    getCandColor: (party) => app.state.customColors[party] || CONFIG.colors[party] || CONFIG.colors['DEFAULT'],
-    
-    openColorPicker: (party, defaultColor, element) => {
+    getCandColor: (p) => app.state.customColors[p] || CONFIG.colors[p] || CONFIG.colors['DEFAULT'],
+
+    openColorPicker: (p, def, el) => {
         const pickr = Pickr.create({
-            el: element, theme: 'nano', default: defaultColor,
+            el: el, theme: 'nano', default: def,
             swatches: Object.values(CONFIG.colors).slice(0, 8),
             components: { preview: true, hue: true, interaction: { save: true } }
         });
-        pickr.on('save', (color) => {
-            const hex = color.toHEXA().toString();
-            app.state.customColors[party] = hex;
-            localStorage.setItem('v12_colors', JSON.stringify(app.state.customColors));
-            element.style.background = hex;
-            app.refreshAll();
+        pickr.on('save', (c) => {
+            app.state.customColors[p] = c.toHEXA().toString();
+            localStorage.setItem('v25_colors', JSON.stringify(app.state.customColors));
+            el.style.background = c.toHEXA().toString();
+            app.refreshUI();
             pickr.destroyAndRemove();
         });
     }
