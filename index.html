@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Atlas Histórico V25</title>
+    <title>Atlas Histórico V25 - High Res</title>
     
     <!-- Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -125,8 +125,13 @@
             background: #0a0c10; padding: 15px; border: 1px solid #333;
             border-radius: 12px; z-index: 999; box-shadow: 0 10px 40px rgba(0,0,0,0.8);
         }
-        .legend-grid { display: flex; height: 20px; width: 220px; border-radius: 4px; overflow: hidden; border: 1px solid #444; }
-        .legend-item { flex: 1; }
+        /* Ajuste do Grid para refletir os 9 degraus */
+        .legend-grid { 
+            display: flex; height: 20px; width: 225px; /* 25px por item */
+            border-radius: 4px; overflow: hidden; border: 1px solid #444; 
+        }
+        .legend-item { flex: 1; border-right: 1px solid rgba(0,0,0,0.3); }
+        .legend-item:last-child { border-right: none; }
 
         .map-controls {
             position: absolute; top: 20px; right: 450px;
@@ -253,16 +258,32 @@
     <!-- LEGENDA -->
     <div class="legend">
         <div style="font-size: 0.8rem; margin-bottom: 8px; font-weight: 700; color: white;">
-            Percentual do Vencedor
+            Percentual do Vencedor (Intensidade)
         </div>
         <div class="legend-grid" id="legendColors"></div>
         <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:#aaa; margin-top:5px;">
-            <span>0% (Claro)</span><span>100% (Saturado)</span>
+            <span>&le;20% (Claro)</span><span>100% (Escuro)</span>
         </div>
     </div>
 </div>
 
 <script>
+// =========================================================
+// CONFIGURAÇÃO DOS DEGRAUS DE COR (GRADIENTE DISCRETO)
+// =========================================================
+const GRADIENT_SCHEME = [
+    { min: 0,  mix: '#ffffff', ratio: 0.85, ref: '#E6E6E6' }, // <= 20%
+    { min: 20, mix: '#ffffff', ratio: 0.85, ref: '#E6E6E6' },
+    { min: 30, mix: '#ffffff', ratio: 0.65, ref: '#CCCCCC' },
+    { min: 40, mix: '#ffffff', ratio: 0.45, ref: '#B2B2B2' },
+    { min: 50, mix: '#ffffff', ratio: 0.25, ref: '#999999' },
+    { min: 60, mix: '#000000', ratio: 0.10, ref: '#808080' },
+    { min: 70, mix: '#000000', ratio: 0.25, ref: '#666666' },
+    { min: 80, mix: '#000000', ratio: 0.45, ref: '#4D4D4D' },
+    { min: 90, mix: '#000000', ratio: 0.60, ref: '#343434' },
+    { min: 100,mix: '#000000', ratio: 0.75, ref: '#202020' }  // 100%
+];
+
 const CONFIG = {
     colors: {
         'PT': '#E12525', 'PL': '#0056A8', 'PSB': '#E12525', 'PDT': '#F58220', 
@@ -278,7 +299,12 @@ const CONFIG = {
 const app = {
     map: null,
     layers: { brazil: null, cities: null },
-    data: { full: null, current: null, names: {} },
+    data: { 
+        full: null, 
+        current: null, 
+        names: {},
+        geoJsonCache: null // Cache para a malha municipal unificada
+    },
     state: {
         view: 'states', 
         selectedId: null,
@@ -297,35 +323,39 @@ const app = {
             opacity: 0.4
         }).addTo(app.map);
 
-        // LEGENDA EM DEGRAUS DE ALTO CONTRASTE
+        // CONFIGURAR LEGENDA (VISUALIZAÇÃO DOS DEGRAUS EM CINZA)
         const legendDiv = document.getElementById('legendColors');
-        for(let i=0; i<10; i++) {
+        const steps = [20, 30, 40, 50, 60, 70, 80, 90, 100];
+        steps.forEach(pct => {
             const el = document.createElement('div');
             el.className = 'legend-item';
-            // Exemplo Cinza para Legenda
-            el.style.background = app.getGradientColor('#666666', (i*10)+5); 
+            const stepConfig = app.getGradientConfig(pct);
+            el.style.background = stepConfig.ref;
             legendDiv.appendChild(el);
-        }
+        });
 
         app.loadBrazilLayer();
         app.loadData();
     },
 
-    // --- NOVA LÓGICA DE DEGRADÊ (ALTO CONTRASTE) ---
-    getGradientColor: (hex, pct) => {
-        const step = Math.floor(pct / 10); // 0 a 9
-        
-        // 0-10% (step 0): Mistura com 90% Branco -> Quase Branco
-        // 90-100% (step 9): Mistura com 0% Branco -> Cor Pura
-        // Isso força um degradê bem visível.
-        const whiteMix = 0.9 - (Math.min(step, 9) * 0.1); 
-        
-        return app.mixColor(hex, '#ffffff', Math.max(0, whiteMix));
+    getGradientConfig: (pct) => {
+        let config = GRADIENT_SCHEME[0];
+        for (let i = 0; i < GRADIENT_SCHEME.length; i++) {
+            if (pct >= GRADIENT_SCHEME[i].min) {
+                config = GRADIENT_SCHEME[i];
+            }
+        }
+        return config;
+    },
+
+    getDiscreteColor: (hex, pct) => {
+        const config = app.getGradientConfig(pct);
+        return app.mixColor(hex, config.mix, config.ratio);
     },
 
     mixColor: (hex1, hex2, amount) => {
         const c1 = app.hexToRgb(hex1);
-        const c2 = app.hexToRgb(hex2); // Cor de mistura (Branco)
+        const c2 = app.hexToRgb(hex2);
         
         const r = Math.round(c1.r + (c2.r - c1.r) * amount);
         const g = Math.round(c1.g + (c2.g - c1.g) * amount);
@@ -377,20 +407,29 @@ const app = {
         }
     },
 
+    fetchGeoJsonCache: async () => {
+        if (app.data.geoJsonCache) return app.data.geoJsonCache;
+        const url = "https://raw.githubusercontent.com/tbrugz/geodata-br/master/geojson/geojs-100-mun.json";
+        const res = await fetch(url);
+        const data = await res.json();
+        app.data.geoJsonCache = data;
+        return data;
+    },
+
     loadAllMunicipalities: async () => {
         const loader = document.getElementById('loader');
-        loader.querySelector('h3').textContent = "Carregando Malha Municipal...";
+        loader.querySelector('h3').textContent = "Carregando Malha Municipal Unificada...";
         loader.classList.remove('hidden');
 
         try {
             if(app.layers.cities) app.map.removeLayer(app.layers.cities);
             if(app.layers.brazil) app.map.removeLayer(app.layers.brazil);
 
-            const url = "https://raw.githubusercontent.com/tbrugz/geodata-br/master/geojson/geojs-100-mun.json";
-            const res = await fetch(url);
-            const data = await res.json();
+            const data = await app.fetchGeoJsonCache();
 
             app.layers.cities = L.geoJSON(data, {
+                // SOLUÇÃO PARA BURACOS: smoothFactor baixo evita simplificação excessiva que cria fendas
+                smoothFactor: 0.3,
                 style: (f) => app.getStyle(f, 'municipios'),
                 onEachFeature: (f, layer) => {
                     const id = f.properties.id || f.properties.codarea;
@@ -429,6 +468,7 @@ const app = {
         data.features.forEach(f => f.properties.id = ufMap[f.properties.sigla]);
 
         app.layers.brazil = L.geoJSON(data, {
+            smoothFactor: 0.5,
             style: (f) => app.getStyle(f, 'estados'),
             onEachFeature: (f, l) => {
                 l.on('click', () => {
@@ -444,17 +484,24 @@ const app = {
         const loader = document.getElementById('loader');
         loader.classList.remove('hidden');
         try {
-            const url = `https://servicodados.ibge.gov.br/api/v3/malhas/estados/${ufId}?formato=application/vnd.geo+json&qualidade=minima&intrarregiao=municipio`;
-            const res = await fetch(url);
-            const data = await res.json();
+            const fullData = await app.fetchGeoJsonCache();
+
+            const stateFeatures = fullData.features.filter(f => {
+                const cod = f.properties.id || f.properties.codarea;
+                return cod && cod.toString().startsWith(ufId);
+            });
+
+            const stateGeoJson = { type: "FeatureCollection", features: stateFeatures };
 
             if(app.layers.cities) app.map.removeLayer(app.layers.cities);
             if(app.layers.brazil) app.map.removeLayer(app.layers.brazil);
 
-            app.layers.cities = L.geoJSON(data, {
+            app.layers.cities = L.geoJSON(stateGeoJson, {
+                // SOLUÇÃO PARA BURACOS
+                smoothFactor: 0.3,
                 style: (f) => app.getStyle(f, 'municipios'),
                 onEachFeature: (f, l) => {
-                    const id = f.properties.codarea;
+                    const id = f.properties.id || f.properties.codarea;
                     const name = app.data.names[id] || f.properties.name;
                     l.on('click', (e) => {
                         L.DomEvent.stopPropagation(e);
@@ -507,8 +554,6 @@ const app = {
 
         let rawVotes = {};
         
-        // CORREÇÃO: Removemos a restrição de 'all_cities'
-        // Se nada estiver selecionado, SEMPRE soma os estados para o total nacional
         if (!app.state.selectedId) {
              if(app.data.current) {
                 Object.values(app.data.current.estados).forEach(st => {
@@ -516,7 +561,6 @@ const app = {
                 });
              }
         } else {
-            // Se tiver seleção, busca específico
             const scope = (app.state.selectedId.length === 2) ? 'estados' : 'municipios';
             rawVotes = app.data.current[scope][app.state.selectedId] || {};
         }
@@ -589,25 +633,32 @@ const app = {
         return { total, winner, pct: winner ? (max/total)*100 : 0, ranking: rank };
     },
 
+    // ESTILO COM CONTORNO BRANCO FINO E DEGRADÊ DISCRETO
     getStyle: (feature, scope) => {
-        if(!app.data.current) return { fillColor: '#111', weight: 1, color: '#000' };
+        if(!app.data.current) return { fillColor: '#111', weight: 0.2, color: '#ffffff' };
         
         const id = feature.properties.id || feature.properties.codarea; 
         const raw = app.data.current[scope][id];
         const stats = app.recalcStats(raw || {});
 
         if (!stats || !stats.winner) {
-            return { fillColor: '#222', weight: 0.5, color: '#000', fillOpacity: 1 };
+            return { fillColor: '#222', weight: 0.2, color: '#ffffff', fillOpacity: 1 };
         }
 
         const { party } = app.parseCandKey(stats.winner);
-        const color = app.getGradientColor(app.getCandColor(party), stats.pct);
+        const color = app.getDiscreteColor(app.getCandColor(party), stats.pct);
+
+        // BORDA MAIS FINA PARA MUNICÍPIOS (0.2) E MAIOR PARA ESTADOS (0.6)
+        const borderWeight = scope === 'estados' ? 0.6 : 0.2;
 
         return {
             fillColor: color,
-            weight: scope === 'estados' ? 0.5 : 0.5,
-            color: '#ffffff', // Contorno branco
-            fillOpacity: 1    // Opaco
+            weight: borderWeight,
+            color: '#ffffff',
+            fillOpacity: 1,
+            // AJUSTE DE RENDERIZAÇÃO PARA EVITAR BURACOS
+            lineJoin: 'round',
+            lineCap: 'round'
         };
     },
 
