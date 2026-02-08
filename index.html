@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eleições Históricas View</title>
+    <title>Eleições Históricas View - High Res</title>
     
     <!-- Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -17,7 +17,7 @@
     <link href="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/nano.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/pickr.min.js"></script>
 
-    <!-- FileSaver (Para Download do Mapa) -->
+    <!-- FileSaver -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
     <!-- Custom CSS -->
@@ -41,9 +41,11 @@
         <div class="controls">
             <div class="control-group">
                 <label>ANO</label>
-                <select id="yearSelect">
+                <!-- Alteração: Adicionado onchange para verificar variantes -->
+                <select id="yearSelect" onchange="app.checkVariants()">
                     <option value="2022">2022</option>
                     <option value="2018">2018</option>
+                    <option value="2017">2017 (Suplementar)</option> <!-- Novo Ano -->
                     <option value="2014">2014</option>
                     <option value="2010">2010</option>
                     <option value="2006">2006</option>
@@ -52,21 +54,30 @@
                     <option value="1994">1994</option>
                 </select>
             </div>
+
+            <div class="control-group">
+                <label>CARGO</label>
+                <!-- Alteração: Adicionado onchange para verificar variantes -->
+                <select id="roleSelect" onchange="app.checkVariants()">
+                    <option value="president">Presidente</option>
+                    <option value="governor">Governador</option>
+                    <option value="senator">Senador</option>
+                </select>
+            </div>
             
+            <!-- NOVO GRUPO: VARIANTES (Escondido por padrão) -->
+            <div class="control-group" id="variantGroup" style="display: none;">
+                <label style="color: var(--accent-blue);">TIPO DE ELEIÇÃO</label>
+                <select id="variantSelect">
+                    <!-- Preenchido via JS -->
+                </select>
+            </div>
+
             <div class="control-group">
                 <label>TURNO</label>
                 <select id="turnSelect">
                     <option value="1">1º Turno</option>
                     <option value="2">2º Turno</option>
-                </select>
-            </div>
-
-            <div class="control-group">
-                <label>CARGO</label>
-                <select id="roleSelect">
-                    <option value="president">Presidente</option>
-                    <option value="governor">Governador</option>
-                    <option value="senator">Senador</option>
                 </select>
             </div>
 
@@ -92,38 +103,26 @@
         </div>
 
         <div style="padding: 15px; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border-color);">
-            
-            <!-- BOTÃO DE VOLTAR -->
             <button id="btnBack" class="btn-back" style="display: none;" onclick="app.resetSelection()">
                 <i class="fas fa-arrow-left"></i> Voltar para o Brasil
             </button>
-
             <div style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted);">Votos Totais</div>
             <div id="totalVotesVal" style="font-size: 1.4rem; font-weight: 800; color: white;">-</div>
         </div>
 
-        <div class="controls" id="resultsContainer">
-            <!-- LISTA -->
-        </div>
+        <div class="controls" id="resultsContainer"></div>
     </aside>
 
     <div class="map-controls">
-        <div class="map-btn map-btn-dl" title="Baixar PNG" onclick="app.generateStaticMap('png')">
-            <i class="fas fa-image"></i>
-        </div>
-        <div class="map-btn map-btn-dl" title="Baixar Vetor SVG" onclick="app.generateStaticMap('svg')">
-            <i class="fas fa-bezier-curve"></i>
-        </div>
+        <div class="map-btn map-btn-dl" title="Baixar PNG" onclick="app.generateStaticMap('png')"><i class="fas fa-image"></i></div>
+        <div class="map-btn map-btn-dl" title="Baixar Vetor SVG" onclick="app.generateStaticMap('svg')"><i class="fas fa-bezier-curve"></i></div>
         <div style="height:5px;"></div>
         <div class="map-btn" onclick="app.map.zoomIn()">+</div>
         <div class="map-btn" onclick="app.map.zoomOut()">-</div>
     </div>
 
-    <!-- LEGENDA -->
     <div class="legend">
-        <div style="font-size: 0.8rem; margin-bottom: 8px; font-weight: 700; color: white;">
-            Percentual do Vencedor (Intensidade)
-        </div>
+        <div style="font-size: 0.8rem; margin-bottom: 8px; font-weight: 700; color: white;">Percentual do Vencedor (Intensidade)</div>
         <div class="legend-grid" id="legendColors"></div>
         <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:#aaa; margin-top:5px;">
             <span>&le;20% (Claro)</span><span>100% (Escuro)</span>
@@ -133,10 +132,10 @@
 
 <script>
 // =========================================================
-// CONFIGURAÇÃO DOS DEGRAUS DE COR (GRADIENTE DISCRETO)
+// CONFIGURAÇÃO DOS DEGRAUS DE COR
 // =========================================================
 const GRADIENT_SCHEME = [
-    { min: 0,  mix: '#ffffff', ratio: 0.85, ref: '#E6E6E6' }, // <= 20%
+    { min: 0,  mix: '#ffffff', ratio: 0.85, ref: '#E6E6E6' },
     { min: 20, mix: '#ffffff', ratio: 0.85, ref: '#E6E6E6' },
     { min: 30, mix: '#ffffff', ratio: 0.65, ref: '#CCCCCC' },
     { min: 40, mix: '#ffffff', ratio: 0.45, ref: '#B2B2B2' },
@@ -145,7 +144,7 @@ const GRADIENT_SCHEME = [
     { min: 70, mix: '#000000', ratio: 0.25, ref: '#666666' },
     { min: 80, mix: '#000000', ratio: 0.45, ref: '#4D4D4D' },
     { min: 90, mix: '#000000', ratio: 0.60, ref: '#343434' },
-    { min: 100,mix: '#000000', ratio: 0.75, ref: '#202020' }  // 100%
+    { min: 100,mix: '#000000', ratio: 0.75, ref: '#202020' }
 ];
 
 const CONFIG = {
@@ -157,19 +156,21 @@ const CONFIG = {
         'PV': '#00FF00', 'CIDADANIA': '#FFA500', 'AVANTE': '#800080',
         'PRONA': '#006400', 'PFL': '#0056A8', 'PMDB': '#008000', 'PSOL': '#FFCC00',
         'OUTROS': '#666666', 'DEFAULT': '#555555'
+    },
+    // MAPA DE ELEIÇÕES ESPECIAIS / SUPLEMENTARES
+    special_elections: {
+        '2018_governor': [
+            { id: 'default', label: 'Eleição Geral (Outubro)' },
+            { id: 'sup_to', label: 'Suplementar TO (Junho)' }
+        ],
+        // Se houverem outras no futuro, adicione aqui. Ex: '2020_senator'
     }
 };
 
 const app = {
     map: null,
     layers: { brazil: null, cities: null },
-    data: { 
-        full: null, 
-        current: null, 
-        names: {},
-        geoJsonCache: null, // Cache para a malha municipal unificada
-        brazilGeoJson: null // Cache para a malha estadual (para exportação)
-    },
+    data: { full: null, current: null, names: {}, geoJsonCache: null, brazilGeoJson: null },
     state: {
         view: 'states', 
         selectedId: null,
@@ -179,62 +180,51 @@ const app = {
     },
 
     init: () => {
-        app.map = L.map('map', {
-            center: [-15, -50], zoom: 4, zoomControl: false,
-            preferCanvas: true, background: '#1a1a1a'
-        });
-        
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            opacity: 0.4
-        }).addTo(app.map);
+        app.map = L.map('map', { center: [-15, -50], zoom: 4, zoomControl: false, preferCanvas: true, background: '#1a1a1a' });
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { opacity: 0.4 }).addTo(app.map);
 
-        // CONFIGURAR LEGENDA (VISUALIZAÇÃO DOS DEGRAUS EM CINZA)
         const legendDiv = document.getElementById('legendColors');
-        const steps = [20, 30, 40, 50, 60, 70, 80, 90, 100];
-        steps.forEach(pct => {
-            const el = document.createElement('div');
-            el.className = 'legend-item';
-            const stepConfig = app.getGradientConfig(pct);
-            el.style.background = stepConfig.ref;
-            legendDiv.appendChild(el);
+        [20, 30, 40, 50, 60, 70, 80, 90, 100].forEach(pct => {
+            const el = document.createElement('div'); el.className = 'legend-item';
+            el.style.background = app.getGradientConfig(pct).ref; legendDiv.appendChild(el);
         });
 
         app.loadBrazilLayer();
+        app.checkVariants(); // Verificar estado inicial
         app.loadData();
     },
 
-    getGradientConfig: (pct) => {
-        let config = GRADIENT_SCHEME[0];
-        for (let i = 0; i < GRADIENT_SCHEME.length; i++) {
-            if (pct >= GRADIENT_SCHEME[i].min) {
-                config = GRADIENT_SCHEME[i];
-            }
+    // --- LÓGICA DE VARIANTES (CORREÇÃO DE SUPLEMENTARES) ---
+    checkVariants: () => {
+        const year = document.getElementById('yearSelect').value;
+        const role = document.getElementById('roleSelect').value;
+        const key = `${year}_${role}`;
+        
+        const variantGroup = document.getElementById('variantGroup');
+        const variantSelect = document.getElementById('variantSelect');
+        
+        // Limpar opções anteriores
+        variantSelect.innerHTML = '';
+
+        if (CONFIG.special_elections[key]) {
+            // Existe variante para este Ano/Cargo
+            CONFIG.special_elections[key].forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt.id;
+                option.textContent = opt.label;
+                variantSelect.appendChild(option);
+            });
+            variantGroup.style.display = 'block';
+        } else {
+            // Não existe variante, esconde o controle
+            variantGroup.style.display = 'none';
+            // Adiciona um default invisível para não quebrar a lógica
+            const option = document.createElement('option');
+            option.value = 'default';
+            variantSelect.appendChild(option);
         }
-        return config;
     },
-
-    getDiscreteColor: (hex, pct) => {
-        const config = app.getGradientConfig(pct);
-        return app.mixColor(hex, config.mix, config.ratio);
-    },
-
-    mixColor: (hex1, hex2, amount) => {
-        const c1 = app.hexToRgb(hex1);
-        const c2 = app.hexToRgb(hex2);
-        
-        const r = Math.round(c1.r + (c2.r - c1.r) * amount);
-        const g = Math.round(c1.g + (c2.g - c1.g) * amount);
-        const b = Math.round(c1.b + (c2.b - c1.b) * amount);
-        
-        return `rgb(${r}, ${g}, ${b})`;
-    },
-
-    hexToRgb: (hex) => {
-        let c = hex.substring(1).split('');
-        if(c.length==3) c= [c[0], c[0], c[1], c[1], c[2], c[2]];
-        c = '0x'+c.join('');
-        return { r: (c>>16)&255, g: (c>>8)&255, b: c&255 };
-    },
+    // -------------------------------------------------------
 
     loadData: async () => {
         const loader = document.getElementById('loader');
@@ -245,14 +235,26 @@ const app = {
         const role = document.getElementById('roleSelect').value;
         const turn = document.getElementById('turnSelect').value;
         const viewMode = document.getElementById('viewModeSelect').value;
+        
+        // Captura a variante (se houver)
+        const variant = document.getElementById('variantSelect').value;
+
+        // Constrói o nome do arquivo. 
+        // Se variant for 'default' ou vazio, carrega "2018_governor.json"
+        // Se variant for 'sup_to', carrega "2018_governor_sup_to.json"
+        let fileName = `${year}_${role}`;
+        if (variant && variant !== 'default') {
+            fileName += `_${variant}`;
+        }
 
         try {
-            const res = await fetch(`data/${year}_${role}.json`);
-            if(!res.ok) throw new Error("Dados não encontrados.");
+            console.log(`Carregando: data/${fileName}.json`); // Debug
+            const res = await fetch(`data/${fileName}.json`);
+            if(!res.ok) throw new Error("Dados não encontrados para esta seleção.");
             const json = await res.json();
             
             if(!json[turn]) {
-                alert("Turno indisponível.");
+                alert("Turno indisponível para esta eleição.");
                 app.data.current = null;
             } else {
                 app.data.full = json;
@@ -266,456 +268,220 @@ const app = {
             }
         } catch (e) {
             console.error(e);
-            alert("Erro: " + e.message);
+            alert("Atenção: " + e.message);
+            // Opcional: Limpar mapa se der erro
+            // app.data.current = null;
+            // app.refreshUI();
         } finally {
             loader.classList.add('hidden');
         }
     },
 
+    // ... (RESTO DAS FUNÇÕES IDÊNTICAS AO ANTERIOR: getGradientConfig, colors, map logic, etc)
+    getGradientConfig: (pct) => {
+        let config = GRADIENT_SCHEME[0];
+        for (let i = 0; i < GRADIENT_SCHEME.length; i++) if (pct >= GRADIENT_SCHEME[i].min) config = GRADIENT_SCHEME[i];
+        return config;
+    },
+    getDiscreteColor: (hex, pct) => app.mixColor(hex, app.getGradientConfig(pct).mix, app.getGradientConfig(pct).ratio),
+    mixColor: (hex1, hex2, amount) => {
+        const c1 = app.hexToRgb(hex1), c2 = app.hexToRgb(hex2);
+        return `rgb(${Math.round(c1.r+(c2.r-c1.r)*amount)}, ${Math.round(c1.g+(c2.g-c1.g)*amount)}, ${Math.round(c1.b+(c2.b-c1.b)*amount)})`;
+    },
+    hexToRgb: (hex) => {
+        let c = hex.substring(1).split(''); if(c.length==3) c=[c[0],c[0],c[1],c[1],c[2],c[2]]; c='0x'+c.join('');
+        return {r:(c>>16)&255, g:(c>>8)&255, b:c&255};
+    },
     fetchGeoJsonCache: async () => {
         if (app.data.geoJsonCache) return app.data.geoJsonCache;
-        const url = "https://raw.githubusercontent.com/tbrugz/geodata-br/master/geojson/geojs-100-mun.json";
-        const res = await fetch(url);
-        const data = await res.json();
-        app.data.geoJsonCache = data;
-        return data;
+        const res = await fetch("https://raw.githubusercontent.com/tbrugz/geodata-br/master/geojson/geojs-100-mun.json");
+        app.data.geoJsonCache = await res.json(); return app.data.geoJsonCache;
     },
-
     loadAllMunicipalities: async () => {
-        const loader = document.getElementById('loader');
-        loader.querySelector('h3').textContent = "Carregando Malha Municipal Unificada...";
-        loader.classList.remove('hidden');
-
+        const loader = document.getElementById('loader'); loader.querySelector('h3').textContent="Carregando Malha Municipal..."; loader.classList.remove('hidden');
         try {
-            if(app.layers.cities) app.map.removeLayer(app.layers.cities);
-            if(app.layers.brazil) app.map.removeLayer(app.layers.brazil);
-
+            if(app.layers.cities) app.map.removeLayer(app.layers.cities); if(app.layers.brazil) app.map.removeLayer(app.layers.brazil);
             const data = await app.fetchGeoJsonCache();
-
-            app.layers.cities = L.geoJSON(data, {
-                // SOLUÇÃO PARA BURACOS: smoothFactor baixo evita simplificação excessiva que cria fendas
-                smoothFactor: 0.3,
-                style: (f) => app.getStyle(f, 'municipios'),
-                onEachFeature: (f, layer) => {
-                    const id = app.getFeatureId(f, 'municipios');
-                    const name = app.data.names[id] || f.properties.name;
-                    layer.on('click', (e) => {
-                        L.DomEvent.stopPropagation(e);
-                        app.selectRegion(id, name);
-                    });
-                    app.bindTooltip(layer, id, 'municipios', name);
-                }
-            }).addTo(app.map);
-            
-            app.state.view = 'all_cities';
-            app.map.fitBounds(app.layers.cities.getBounds());
-
-        } catch(e) { alert("Erro ao carregar malha."); } 
-        finally { loader.classList.add('hidden'); app.updateSidebarRight(); }
+            app.layers.cities = L.geoJSON(data, { smoothFactor: 0.3, style: (f)=>app.getStyle(f,'municipios'), onEachFeature: (f,l)=>{
+                const id = app.getFeatureId(f,'municipios'); l.on('click', (e)=>{ L.DomEvent.stopPropagation(e); app.selectRegion(id, app.data.names[id]||f.properties.name); });
+                app.bindTooltip(l, id, 'municipios', app.data.names[id]||f.properties.name);
+            }}).addTo(app.map);
+            app.state.view = 'all_cities'; app.map.fitBounds(app.layers.cities.getBounds());
+        } catch(e){ alert("Erro ao carregar malha."); } finally { loader.classList.add('hidden'); app.updateSidebarRight(); }
     },
-
-    resetMapToStates: () => {
-        if(app.layers.cities) app.map.removeLayer(app.layers.cities);
-        app.loadBrazilLayer();
-        app.state.view = 'states';
-        app.resetSelection();
-    },
-
+    resetMapToStates: () => { if(app.layers.cities) app.map.removeLayer(app.layers.cities); app.loadBrazilLayer(); app.state.view='states'; app.resetSelection(); },
     loadBrazilLayer: async () => {
-        if(app.layers.brazil) {
-            app.layers.brazil.addTo(app.map);
-            app.layers.brazil.setStyle((f) => app.getStyle(f, 'estados'));
-            return;
-        }
+        if(app.layers.brazil) { app.layers.brazil.addTo(app.map); app.layers.brazil.setStyle((f)=>app.getStyle(f,'estados')); return; }
         const res = await fetch('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson');
         const data = await res.json();
         const ufMap = {'AC':'12','AL':'27','AM':'13','AP':'16','BA':'29','CE':'23','DF':'53','ES':'32','GO':'52','MA':'21','MG':'31','MS':'50','MT':'51','PA':'15','PB':'25','PE':'26','PI':'22','PR':'41','RJ':'33','RN':'24','RO':'11','RR':'14','RS':'43','SC':'42','SE':'28','SP':'35','TO':'17'};
-        
-        // Injetar IDs no GeoJSON para cache e uso na exportação
-        data.features.forEach(f => {
-            f.properties.id = ufMap[f.properties.sigla];
-        });
-        app.data.brazilGeoJson = data;
-
-        app.layers.brazil = L.geoJSON(data, {
-            smoothFactor: 0.5,
-            style: (f) => app.getStyle(f, 'estados'),
-            onEachFeature: (f, l) => {
-                l.on('click', () => {
-                    if(app.state.view === 'states') app.loadStateCities(f.properties.id, f.properties.name);
-                    else app.selectRegion(f.properties.id, f.properties.name);
-                });
-                app.bindTooltip(l, f.properties.id, 'estados', f.properties.name);
-            }
-        }).addTo(app.map);
+        data.features.forEach(f => f.properties.id = ufMap[f.properties.sigla]); app.data.brazilGeoJson = data;
+        app.layers.brazil = L.geoJSON(data, { smoothFactor: 0.5, style: (f)=>app.getStyle(f,'estados'), onEachFeature: (f,l)=>{
+            l.on('click', ()=>{ if(app.state.view==='states') app.loadStateCities(f.properties.id, f.properties.name); else app.selectRegion(f.properties.id, f.properties.name); });
+            app.bindTooltip(l, f.properties.id, 'estados', f.properties.name);
+        }}).addTo(app.map);
     },
-
     loadStateCities: async (ufId, ufName) => {
-        const loader = document.getElementById('loader');
-        loader.classList.remove('hidden');
+        const loader = document.getElementById('loader'); loader.classList.remove('hidden');
         try {
-            const fullData = await app.fetchGeoJsonCache();
-
-            const stateFeatures = fullData.features.filter(f => {
-                const cod = app.getFeatureId(f, 'municipios');
-                return cod && cod.toString().startsWith(ufId);
-            });
-
-            const stateGeoJson = { type: "FeatureCollection", features: stateFeatures };
-
-            if(app.layers.cities) app.map.removeLayer(app.layers.cities);
-            if(app.layers.brazil) app.map.removeLayer(app.layers.brazil);
-
-            app.layers.cities = L.geoJSON(stateGeoJson, {
-                // SOLUÇÃO PARA BURACOS
-                smoothFactor: 0.3,
-                style: (f) => app.getStyle(f, 'municipios'),
-                onEachFeature: (f, l) => {
-                    const id = app.getFeatureId(f, 'municipios');
-                    const name = app.data.names[id] || f.properties.name;
-                    l.on('click', (e) => {
-                        L.DomEvent.stopPropagation(e);
-                        app.selectRegion(id, name);
-                    });
-                    app.bindTooltip(l, id, 'municipios', name);
-                }
-            }).addTo(app.map);
-            
-            app.map.fitBounds(app.layers.cities.getBounds());
-            app.selectRegion(ufId, ufName);
-
-        } catch(e) { console.error(e); } 
-        finally { loader.classList.add('hidden'); }
+            const full = await app.fetchGeoJsonCache();
+            const feats = full.features.filter(f => { const c = app.getFeatureId(f,'municipios'); return c && c.toString().startsWith(ufId); });
+            if(app.layers.cities) app.map.removeLayer(app.layers.cities); if(app.layers.brazil) app.map.removeLayer(app.layers.brazil);
+            app.layers.cities = L.geoJSON({type:"FeatureCollection", features:feats}, { smoothFactor:0.3, style:(f)=>app.getStyle(f,'municipios'), onEachFeature:(f,l)=>{
+                const id=app.getFeatureId(f,'municipios'); l.on('click',(e)=>{ L.DomEvent.stopPropagation(e); app.selectRegion(id, app.data.names[id]||f.properties.name); });
+                app.bindTooltip(l, id, 'municipios', app.data.names[id]||f.properties.name);
+            }}).addTo(app.map);
+            app.map.fitBounds(app.layers.cities.getBounds()); app.selectRegion(ufId, ufName);
+        } catch(e){ console.error(e); } finally { loader.classList.add('hidden'); }
     },
-
-    selectRegion: (id, name) => {
-        app.state.selectedId = id;
-        app.state.selectedName = name;
-        document.getElementById('btnBack').style.display = 'flex';
-        app.refreshUI();
-    },
-
+    selectRegion: (id, name) => { app.state.selectedId = id; app.state.selectedName = name; document.getElementById('btnBack').style.display='flex'; app.refreshUI(); },
     resetSelection: () => {
-        app.state.selectedId = null;
-        app.state.selectedName = "Brasil";
-        document.getElementById('btnBack').style.display = 'none';
-        
-        if(app.state.view === 'states' && app.layers.cities) {
-            app.map.removeLayer(app.layers.cities);
-            app.layers.brazil.addTo(app.map);
-            app.map.setView([-15, -50], 4);
-        }
+        app.state.selectedId = null; app.state.selectedName = "Brasil"; document.getElementById('btnBack').style.display='none';
+        if(app.state.view==='states' && app.layers.cities) { app.map.removeLayer(app.layers.cities); app.layers.brazil.addTo(app.map); app.map.setView([-15,-50],4); }
         app.refreshUI();
     },
-
-    refreshUI: () => {
-        if(app.layers.brazil) app.layers.brazil.setStyle((f) => app.getStyle(f, 'estados'));
-        if(app.layers.cities) app.layers.cities.setStyle((f) => app.getStyle(f, 'municipios'));
-        app.updateSidebarRight();
-    },
-
+    refreshUI: () => { if(app.layers.brazil) app.layers.brazil.setStyle((f)=>app.getStyle(f,'estados')); if(app.layers.cities) app.layers.cities.setStyle((f)=>app.getStyle(f,'municipios')); app.updateSidebarRight(); },
     updateSidebarRight: () => {
-        const container = document.getElementById('resultsContainer');
-        const titleEl = document.getElementById('regionName');
-        const totalEl = document.getElementById('totalVotesVal');
-        
-        container.innerHTML = '';
-        titleEl.textContent = app.state.selectedName;
-
-        let rawVotes = {};
-        
-        if (!app.state.selectedId) {
-             if(app.data.current) {
-                Object.values(app.data.current.estados).forEach(st => {
-                    Object.entries(st).forEach(([c, v]) => rawVotes[c] = (rawVotes[c]||0)+v);
-                });
-             }
+        const cont = document.getElementById('resultsContainer'); document.getElementById('regionName').textContent = app.state.selectedName;
+        cont.innerHTML = '';
+        let raw = {};
+        if(!app.state.selectedId) {
+            if(app.data.current) Object.values(app.data.current.estados).forEach(st => Object.entries(st).forEach(([c,v])=> raw[c]=(raw[c]||0)+v));
         } else {
-            const scope = (app.state.selectedId.length === 2) ? 'estados' : 'municipios';
-            rawVotes = app.data.current[scope][app.state.selectedId] || {};
+            const s = app.state.selectedId.length===2?'estados':'municipios';
+            raw = app.data.current ? (app.data.current[s][app.state.selectedId]||{}) : {};
         }
-
-        const allCands = new Set([...Object.keys(rawVotes), ...app.state.ignored]);
-        const cleanVotes = {};
-        allCands.forEach(c => cleanVotes[c] = rawVotes[c] || 0);
-
-        const stats = app.recalcStats(cleanVotes);
-
-        if(!stats) {
-            totalEl.textContent = "0";
-            container.innerHTML = '<div style="color:#666;text-align:center;">Sem dados</div>';
-            return;
-        }
-
-        totalEl.textContent = stats.total.toLocaleString('pt-BR');
-
+        const stats = app.recalcStats(raw);
+        document.getElementById('totalVotesVal').textContent = stats ? stats.total.toLocaleString('pt-BR') : '-';
+        if(!stats) { cont.innerHTML='<div style="color:#666;text-align:center;">Sem dados</div>'; return; }
         stats.ranking.forEach(r => {
-            const { name, party } = app.parseCandKey(r.cand);
-            const color = app.getCandColor(party);
-            const isIgnored = r.ignored;
-
-            const div = document.createElement('div');
-            div.className = `cand-row ${isIgnored ? 'disabled' : ''}`;
-            div.innerHTML = `
-                <div class="cand-check ${isIgnored ? '' : 'checked'}"></div>
-                <div class="cand-color" style="background:${color}"></div>
-                <div class="cand-info">
-                    <div class="cand-head">
-                        <span>${name}</span>
-                        <span style="color:${color}">${isIgnored ? '--' : r.pct.toFixed(2)+'%'}</span>
-                    </div>
-                    <div class="cand-sub">
-                        <span>${party}</span>
-                        <span>${isIgnored ? (r.orig||0).toLocaleString() : r.votes.toLocaleString()}</span>
-                    </div>
-                    ${!isIgnored ? `<div class="progress-bar"><div class="progress-fill" style="width:${r.pct}%; background:${color}"></div></div>` : ''}
-                </div>
-            `;
-            
-            div.querySelector('.cand-check').onclick = () => {
-                if(app.state.ignored.has(r.cand)) app.state.ignored.delete(r.cand);
-                else app.state.ignored.add(r.cand);
-                app.refreshUI();
-            };
-            div.querySelector('.cand-color').onclick = (e) => {
-                e.stopPropagation();
-                app.openColorPicker(party, color, e.target);
-            };
-            container.appendChild(div);
+            const {name,party} = app.parseCandKey(r.cand), color = app.getCandColor(party);
+            const div = document.createElement('div'); div.className = `cand-row ${r.ignored?'disabled':''}`;
+            div.innerHTML = `<div class="cand-check ${r.ignored?'':'checked'}"></div><div class="cand-color" style="background:${color}"></div><div class="cand-info"><div class="cand-head"><span>${name}</span><span style="color:${color}">${r.ignored?'--':r.pct.toFixed(2)+'%'}</span></div><div class="cand-sub"><span>${party}</span><span>${r.votes.toLocaleString()}</span></div>${!r.ignored?`<div class="progress-bar"><div class="progress-fill" style="width:${r.pct}%; background:${color}"></div></div>`:''}</div>`;
+            div.querySelector('.cand-check').onclick = () => { if(app.state.ignored.has(r.cand)) app.state.ignored.delete(r.cand); else app.state.ignored.add(r.cand); app.refreshUI(); };
+            div.querySelector('.cand-color').onclick = (e) => { e.stopPropagation(); app.openColorPicker(party, color, e.target); };
+            cont.appendChild(div);
         });
     },
-
     recalcStats: (votes) => {
-        let total = 0, max = -1, winner = null;
-        let rank = [];
-        Object.entries(votes).forEach(([c, v]) => {
-            if(!app.state.ignored.has(c)) {
-                total += v;
-                if(v > max) { max = v; winner = c; }
-                rank.push({ cand: c, votes: v, pct: 0 });
-            } else {
-                rank.push({ cand: c, votes: 0, pct: 0, ignored: true, orig: v });
-            }
+        let total=0, max=-1, winner=null, rank=[];
+        Object.entries(votes).forEach(([c,v])=>{
+            if(!app.state.ignored.has(c)) { total+=v; if(v>max){max=v; winner=c;} rank.push({cand:c, votes:v, pct:0}); }
+            else rank.push({cand:c, votes:0, pct:0, ignored:true, orig:v});
         });
-        if(total === 0 && rank.filter(x=>!x.ignored).length === 0) return null;
-        rank.forEach(r => { if(!r.ignored) r.pct = (r.votes/total)*100; });
-        rank.sort((a,b) => (b.ignored?-1:b.votes) - (a.ignored?-1:a.votes));
-        return { total, winner, pct: winner ? (max/total)*100 : 0, ranking: rank };
+        if(total===0 && rank.filter(x=>!x.ignored).length===0) return null;
+        rank.forEach(r=>{if(!r.ignored)r.pct=(r.votes/total)*100;}); rank.sort((a,b)=>(b.ignored?-1:b.votes)-(a.ignored?-1:a.votes));
+        return {total, winner, pct:winner?(max/total)*100:0, ranking:rank};
     },
-
-    // Retorna a cor sólida do vencedor para um dado ID/Escopo (usado no mapa e exportação)
     getFeatureColor: (id, scope) => {
-        if(!app.data.current) return '#111';
-        
-        const raw = app.data.current[scope][id];
-        const stats = app.recalcStats(raw || {});
-
-        if (!stats || !stats.winner) {
-            return '#222';
-        }
-
-        const { party } = app.parseCandKey(stats.winner);
-        return app.getDiscreteColor(app.getCandColor(party), stats.pct);
+        if(!app.data.current) return '#222';
+        const raw = app.data.current[scope][id]; const stats = app.recalcStats(raw||{});
+        if(!stats||!stats.winner) return '#222';
+        return app.getDiscreteColor(app.getCandColor(app.parseCandKey(stats.winner).party), stats.pct);
     },
-
-    getFeatureId: (feature, scope) => {
-        if (scope === 'municipios') return String(feature.properties.id || feature.properties.codarea || '');
-        // Estados
-        return String(feature.properties.id || '');
-    },
-
-    // ESTILO COM CONTORNO BRANCO FINO E DEGRADÊ DISCRETO
-    getStyle: (feature, scope) => {
-        const id = app.getFeatureId(feature, scope);
-        const color = app.getFeatureColor(id, scope);
-        
-        // BORDA MAIS FINA PARA MUNICÍPIOS (0.2) E MAIOR PARA ESTADOS (0.6)
-        const borderWeight = scope === 'estados' ? 0.6 : 0.2;
-
-        return {
-            fillColor: color,
-            weight: borderWeight,
-            color: '#ffffff',
-            fillOpacity: 1,
-            // AJUSTE DE RENDERIZAÇÃO PARA EVITAR BURACOS
-            lineJoin: 'round',
-            lineCap: 'round'
-        };
-    },
-
-    bindTooltip: (layer, id, scope, name) => {
-        layer.bindTooltip(() => {
-            const raw = app.data.current[scope][id];
-            const stats = app.recalcStats(raw || {});
-            
+    getFeatureId: (f, s) => s==='municipios'?String(f.properties.id||f.properties.codarea||''):String(f.properties.id||''),
+    getStyle: (f, s) => ({ fillColor: app.getFeatureColor(app.getFeatureId(f,s),s), weight:s==='estados'?0.6:0.2, color:'#ffffff', fillOpacity:1, lineJoin:'round', lineCap:'round' }),
+    bindTooltip: (l, id, s, name) => {
+        l.bindTooltip(()=>{
+            const raw = app.data.current?app.data.current[s][id]:null; const stats = app.recalcStats(raw||{});
             if(!stats) return `<div class="custom-tooltip"><div class="tt-head">${name}</div><div class="tt-body">Sem dados</div></div>`;
-            
-            const { name: wName, party } = app.parseCandKey(stats.winner);
-            const color = app.getCandColor(party);
-            
-            return `
-                <div class="custom-tooltip">
-                    <div class="tt-head">${name}</div>
-                    <div class="tt-body">
-                        <div style="font-size:0.75rem; color:#aaa">Vencedor</div>
-                        <div style="color:${color}; font-weight:800; font-size:1rem;">${wName}</div>
-                        <div style="margin-top:4px;">
-                            ${stats.pct.toFixed(1)}% <span style="font-size:0.8rem; opacity:0.7">(${stats.ranking[0].votes.toLocaleString()})</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }, { sticky: true, direction: 'top' });
+            const w = app.parseCandKey(stats.winner);
+            return `<div class="custom-tooltip"><div class="tt-head">${name}</div><div class="tt-body"><div style="font-size:0.75rem; color:#aaa">Vencedor</div><div style="color:${app.getCandColor(w.party)}; font-weight:800; font-size:1rem;">${w.name}</div><div style="margin-top:4px;">${stats.pct.toFixed(1)}% <span style="font-size:0.8rem; opacity:0.7">(${stats.ranking[0].votes.toLocaleString()})</span></div></div></div>`;
+        }, {sticky:true, direction:'top'});
     },
-
-    parseCandKey: (k) => {
-        const m = k.match(/(.*?)\s*\((.*?)\)/);
-        return m ? { name: m[1], party: m[2] } : { name: k, party: 'DEFAULT' };
-    },
-
+    parseCandKey: (k) => { const m = k.match(/(.*?)\s*\((.*?)\)/); return m ? {name:m[1], party:m[2]} : {name:k, party:'DEFAULT'}; },
     getCandColor: (p) => app.state.customColors[p] || CONFIG.colors[p] || CONFIG.colors['DEFAULT'],
-
     openColorPicker: (p, def, el) => {
-        const pickr = Pickr.create({
-            el: el, theme: 'nano', default: def,
-            swatches: Object.values(CONFIG.colors).slice(0, 8),
-            components: { preview: true, hue: true, interaction: { save: true } }
-        });
-        pickr.on('save', (c) => {
-            app.state.customColors[p] = c.toHEXA().toString();
-            localStorage.setItem('v25_colors', JSON.stringify(app.state.customColors));
-            el.style.background = c.toHEXA().toString();
-            app.refreshUI();
-            pickr.destroyAndRemove();
-        });
+        const pickr = Pickr.create({ el:el, theme:'nano', default:def, swatches:Object.values(CONFIG.colors).slice(0,8), components:{preview:true, hue:true, interaction:{save:true}} });
+        pickr.on('save', (c) => { app.state.customColors[p]=c.toHEXA().toString(); localStorage.setItem('v25_colors',JSON.stringify(app.state.customColors)); el.style.background=c.toHEXA().toString(); app.refreshUI(); pickr.destroyAndRemove(); });
     },
-
     generateStaticMap: async (format) => {
-        const loader = document.getElementById('loader');
-        loader.classList.remove('hidden');
-        
-        setTimeout(() => {
+        const loader = document.getElementById('loader'); loader.classList.remove('hidden');
+        setTimeout(()=>{
             try {
-                let features = [];
-                let scope = 'municipios';
-                
-                // Determinar o que exportar com base na visualização atual
-                if (app.state.view === 'states' && !app.state.selectedId) {
-                    // Visão Brasil (Estados)
-                    if (!app.data.brazilGeoJson) throw new Error("Dados do mapa não carregados.");
-                    features = app.data.brazilGeoJson.features;
-                    scope = 'estados';
-                } else if (app.state.selectedId && app.state.selectedId.length === 2) {
-                    // Visão Estado Específico (Municípios do estado)
-                    if (!app.data.geoJsonCache) throw new Error("Dados municipais não carregados.");
-                    features = app.data.geoJsonCache.features.filter(f => {
-                        const id = app.getFeatureId(f, 'municipios');
-                        return id.startsWith(app.state.selectedId);
-                    });
-                    scope = 'municipios';
-                } else if (app.state.view === 'all_cities') {
-                    // Visão Brasil (Todos os municípios)
-                    if (!app.data.geoJsonCache) throw new Error("Dados municipais não carregados.");
-                    features = app.data.geoJsonCache.features;
-                    scope = 'municipios';
-                } else {
-                    // Fallback para Brasil (Estados)
-                    features = app.data.brazilGeoJson ? app.data.brazilGeoJson.features : [];
-                    scope = 'estados';
-                }
-
-                if (features.length === 0) throw new Error("Nenhum dado para exportar.");
-
-                // Calcular Bounding Box
-                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-                
-                features.forEach(f => {
-                    const scan = (coords) => {
-                        coords.forEach(pt => {
-                            if(typeof pt[0] === 'number'){
-                                if(pt[0] < minX) minX = pt[0];
-                                if(pt[0] > maxX) maxX = pt[0];
-                                if(pt[1] < minY) minY = pt[1];
-                                if(pt[1] > maxY) maxY = pt[1];
-                            } else {
-                                scan(pt);
-                            }
-                        });
-                    };
-                    if(f.geometry.type.includes('Polygon')) {
-                        scan(f.geometry.coordinates);
-                    }
+                let feats = [], scope = 'municipios';
+                if(app.state.view==='states' && !app.state.selectedId) { feats = app.data.brazilGeoJson.features; scope='estados'; }
+                else if(app.state.selectedId && app.state.selectedId.length===2) { feats = app.data.geoJsonCache.features.filter(f=>app.getFeatureId(f,'municipios').startsWith(app.state.selectedId)); }
+                else if(app.state.view==='all_cities') feats = app.data.geoJsonCache.features;
+                else { feats = app.data.brazilGeoJson?app.data.brazilGeoJson.features:[]; scope='estados'; }
+                if(!feats.length) throw new Error("Sem dados.");
+                let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+                feats.forEach(f=>{ const scan=(c)=>{c.forEach(p=>{if(typeof p[0]==='number'){if(p[0]<minX)minX=p[0];if(p[0]>maxX)maxX=p[0];if(p[1]<minY)minY=p[1];if(p[1]>maxY)maxY=p[1];}else scan(p);});}; if(f.geometry.type.includes('Polygon')) scan(f.geometry.coordinates); });
+                const w=4096, latD=maxY-minY, lonD=maxX-minX, h=w/(lonD/latD);
+                const proj=(x,y)=>[ (x-minX)*(w/lonD), (maxY-y)*(h/latD) ];
+                let svg='';
+                feats.forEach(f=>{
+                    const col = app.getFeatureColor(app.getFeatureId(f,scope),scope); let d='';
+                    const draw=(r)=>{let p=''; r.forEach((pt,i)=>{const[px,py]=proj(pt[0],pt[1]); p+=(i===0?'M':'L')+px.toFixed(1)+','+py.toFixed(1);}); return p+'Z ';};
+                    if(f.geometry.type==='Polygon') f.geometry.coordinates.forEach(r=>d+=draw(r)); else if(f.geometry.type==='MultiPolygon') f.geometry.coordinates.forEach(p=>p.forEach(r=>d+=draw(r)));
+                    svg+=`<path d="${d}" fill="${col}" stroke="#fff" stroke-width="${scope==='estados'?2:0.5}"/>`;
                 });
-
-                // Configurar Projeção Simples (Mercator-ish ajustada para SVG)
-                const w = 4096;
-                const latD = maxY - minY;
-                const lonD = maxX - minX;
-                const h = w / (lonD/latD);
-                
-                const proj = (x,y) => [
-                    (x - minX) * (w / lonD),
-                    (maxY - y) * (h / latD) // Y invertido no SVG
-                ];
-
-                // Gerar SVG
-                let svgContent = '';
-                
-                features.forEach(f => {
-                    const id = app.getFeatureId(f, scope);
-                    const color = app.getFeatureColor(id, scope);
-                    
-                    let d = '';
-                    const draw = (r) => {
-                        let p = '';
-                        r.forEach((pt,i)=>{
-                            const [px,py] = proj(pt[0],pt[1]);
-                            p += (i===0 ? 'M' : 'L') + px.toFixed(1) + ',' + py.toFixed(1);
-                        });
-                        return p + 'Z ';
-                    };
-
-                    if(f.geometry.type === 'Polygon') {
-                        f.geometry.coordinates.forEach(r => d += draw(r));
-                    } else if(f.geometry.type === 'MultiPolygon') {
-                        f.geometry.coordinates.forEach(p => p.forEach(r => d += draw(r)));
-                    }
-
-                    // Stroke width ajustado pelo escopo
-                    const strW = scope === 'estados' ? 2 : 0.5;
-                    svgContent += `<path d="${d}" fill="${color}" stroke="#fff" stroke-width="${strW}"/>`;
-                });
-
-                const finalSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">${svgContent}</svg>`;
+                const final = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">${svg}</svg>`;
                 const fname = `mapa_${app.state.selectedName}_${scope}_${document.getElementById('yearSelect').value}`;
-
-                if(format === 'svg') {
-                    const blob = new Blob([finalSvg], {type: "image/svg+xml;charset=utf-8"});
-                    saveAs(blob, `${fname}.svg`);
-                } else {
-                    const img = new Image();
-                    img.onload = () => {
-                        const c = document.createElement('canvas');
-                        c.width = w;
-                        c.height = h;
-                        const ctx = c.getContext('2d');
-                        ctx.drawImage(img, 0, 0);
-                        c.toBlob(b => saveAs(b, `${fname}.png`));
-                    };
-                    img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(finalSvg)));
-                }
-
-            } catch(e) {
-                alert("Erro ao gerar mapa: " + e.message);
-                console.error(e);
-            } finally {
-                loader.classList.add('hidden');
-            }
-        }, 100);
+                if(format==='svg') saveAs(new Blob([final],{type:"image/svg+xml;charset=utf-8"}), `${fname}.svg`);
+                else { const img=new Image(); img.onload=()=>{const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0);c.toBlob(b=>saveAs(b,`${fname}.png`));}; img.src='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(final))); }
+            } catch(e){ alert("Erro: "+e.message); } finally { loader.classList.add('hidden'); }
+        },100);
     }
 };
 
 document.addEventListener('DOMContentLoaded', app.init);
+    // Correções para o comportamento do mapa
+document.addEventListener('DOMContentLoaded', function() {
+    // Função para garantir que tooltips apareçam sempre
+    function ensureTooltips() {
+        // Adicionar classe especial quando um estado é selecionado
+        const checkStateSelection = setInterval(() => {
+            if (app.state.selectedId && app.state.selectedId.length === 2) {
+                document.getElementById('app').classList.add('state-selected');
+                
+                // Marcar o estado ativo
+                if (app.layers.cities) {
+                    app.layers.cities.eachLayer(layer => {
+                        layer.setStyle({
+                            weight: 1,
+                            color: 'rgba(255, 255, 255, 0.5)'
+                        });
+                    });
+                }
+            } else {
+                document.getElementById('app').classList.remove('state-selected');
+            }
+        }, 500);
+        
+        // Ajustar tooltips para nomes longos
+        const adjustTooltips = () => {
+            document.querySelectorAll('.leaflet-tooltip').forEach(tooltip => {
+                const head = tooltip.querySelector('.tt-head');
+                if (head && head.textContent.length > 30) {
+                    head.style.fontSize = '0.85rem';
+                    head.style.lineHeight = '1.2';
+                }
+            });
+        };
+        
+        // Ajustar tooltips periodicamente
+        setInterval(adjustTooltips, 1000);
+    }
+    
+    // Executar após o mapa ser carregado
+    setTimeout(ensureTooltips, 2000);
+    
+    // Melhorar a detecção de hover
+    const originalLoadStateCities = app.loadStateCities;
+    app.loadStateCities = async function(ufId, ufName) {
+        await originalLoadStateCities.call(this, ufId, ufName);
+        
+        // Adicionar classe especial para o estado ativo
+        if (this.layers.cities) {
+            this.layers.cities.eachLayer(layer => {
+                layer.options.weight = 1;
+                layer.options.color = 'rgba(255, 255, 255, 0.5)';
+                layer.setStyle(layer.options);
+            });
+        }
+    };
+});
 </script>
 </body>
 </html>
