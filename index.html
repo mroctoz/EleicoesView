@@ -426,62 +426,6 @@ const app = {
 };
 
 document.addEventListener('DOMContentLoaded', app.init);
-    // Correções para o comportamento do mapa
-document.addEventListener('DOMContentLoaded', function() {
-    // Função para garantir que tooltips apareçam sempre
-    function ensureTooltips() {
-        // Adicionar classe especial quando um estado é selecionado
-        const checkStateSelection = setInterval(() => {
-            if (app.state.selectedId && app.state.selectedId.length === 2) {
-                document.getElementById('app').classList.add('state-selected');
-                
-                // Marcar o estado ativo
-                if (app.layers.cities) {
-                    app.layers.cities.eachLayer(layer => {
-                        layer.setStyle({
-                            weight: 1,
-                            color: 'rgba(255, 255, 255, 0.5)'
-                        });
-                    });
-                }
-            } else {
-                document.getElementById('app').classList.remove('state-selected');
-            }
-        }, 500);
-        
-        // Ajustar tooltips para nomes longos
-        const adjustTooltips = () => {
-            document.querySelectorAll('.leaflet-tooltip').forEach(tooltip => {
-                const head = tooltip.querySelector('.tt-head');
-                if (head && head.textContent.length > 30) {
-                    head.style.fontSize = '0.85rem';
-                    head.style.lineHeight = '1.2';
-                }
-            });
-        };
-        
-        // Ajustar tooltips periodicamente
-        setInterval(adjustTooltips, 1000);
-    }
-    
-    // Executar após o mapa ser carregado
-    setTimeout(ensureTooltips, 2000);
-    
-    // Melhorar a detecção de hover
-    const originalLoadStateCities = app.loadStateCities;
-    app.loadStateCities = async function(ufId, ufName) {
-        await originalLoadStateCities.call(this, ufId, ufName);
-        
-        // Adicionar classe especial para o estado ativo
-        if (this.layers.cities) {
-            this.layers.cities.eachLayer(layer => {
-                layer.options.weight = 1;
-                layer.options.color = 'rgba(255, 255, 255, 0.5)';
-                layer.setStyle(layer.options);
-            });
-        }
-    };
-});
 </script>
 </body>
 </html>
