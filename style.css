@@ -126,7 +126,7 @@ body {
 }
 
 /* ============================================
-   MAPA
+   MAPA - MELHORIAS ESPECÍFICAS
 ============================================ */
 #map {
   flex: 1;
@@ -135,6 +135,30 @@ body {
   z-index: 1;
   position: relative;
   transition: all var(--transition-normal);
+}
+
+/* Remover fundo indesejado ao clicar em estado */
+#map .leaflet-layer:not(.leaflet-interactive) {
+  opacity: 0.4 !important;
+}
+
+/* Melhorar a renderização dos polígonos */
+.leaflet-pane.leaflet-overlay-pane svg {
+  shape-rendering: geometricPrecision !important;
+}
+
+/* Garantir que todos os elementos interativos sejam clicáveis */
+.leaflet-interactive {
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  stroke-linejoin: round !important;
+  stroke-linecap: round !important;
+}
+
+/* Suavizar transições do mapa */
+.leaflet-fade-anim .leaflet-tile,
+.leaflet-fade-anim .leaflet-popup {
+  transition: opacity 0.3s linear !important;
 }
 
 /* ============================================
@@ -530,6 +554,17 @@ select:hover {
   font-size: 0.95rem;
   font-weight: 600;
   margin-bottom: 6px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cand-head span:first-child {
+  flex: 1;
+  min-width: 120px;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .cand-sub {
@@ -649,32 +684,81 @@ select:hover {
 }
 
 /* ============================================
-   TOOLTIP
+   TOOLTIP - MELHORIAS CRÍTICAS
 ============================================ */
 .custom-tooltip {
-  background: rgba(15, 23, 42, 0.95);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--border-light);
-  color: white;
-  border-radius: var(--border-radius-md);
-  font-family: 'Inter', sans-serif;
-  padding: 0;
-  box-shadow: var(--shadow-xl);
-  max-width: 250px;
+  background: rgba(15, 23, 42, 0.98) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid var(--border-light) !important;
+  color: white !important;
+  border-radius: var(--border-radius-md) !important;
+  font-family: 'Inter', sans-serif !important;
+  padding: 0 !important;
+  box-shadow: var(--shadow-xl) !important;
+  max-width: 300px !important;
+  min-width: 200px !important;
   z-index: 10000 !important;
   pointer-events: none !important;
+  overflow: hidden !important;
+}
+
+/* Garantir que o tooltip fique acima de tudo */
+.leaflet-tooltip {
+  z-index: 10000 !important;
+}
+
+/* Melhorar a ponta do tooltip */
+.leaflet-tooltip-top:before {
+  border-top-color: rgba(15, 23, 42, 0.98) !important;
+}
+
+.leaflet-tooltip-bottom:before {
+  border-bottom-color: rgba(15, 23, 42, 0.98) !important;
+}
+
+.leaflet-tooltip-left:before {
+  border-left-color: rgba(15, 23, 42, 0.98) !important;
+}
+
+.leaflet-tooltip-right:before {
+  border-right-color: rgba(15, 23, 42, 0.98) !important;
 }
 
 .tt-head {
-  background: rgba(30, 41, 59, 0.9);
-  padding: 12px 16px;
-  font-weight: 700;
-  border-bottom: 1px solid var(--border-light);
-  border-radius: var(--border-radius-md) var(--border-radius-md) 0 0;
+  background: rgba(30, 41, 59, 0.95) !important;
+  padding: 12px 16px !important;
+  font-weight: 700 !important;
+  border-bottom: 1px solid var(--border-light) !important;
+  border-radius: var(--border-radius-md) var(--border-radius-md) 0 0 !important;
+  font-size: 0.95rem !important;
+  line-height: 1.3 !important;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+  hyphens: auto !important;
+  max-width: 280px !important;
 }
 
 .tt-body {
-  padding: 12px 16px;
+  padding: 12px 16px !important;
+  font-size: 0.9rem !important;
+  line-height: 1.4 !important;
+}
+
+.tt-body div {
+  margin-bottom: 4px !important;
+}
+
+.tt-body div:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Nome do candidato no tooltip - quebra de linha */
+.tt-body div[style*="font-weight:800"] {
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+  hyphens: auto !important;
+  line-height: 1.3 !important;
+  max-width: 280px !important;
 }
 
 /* ============================================
@@ -691,6 +775,28 @@ select:hover {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   margin-top: 5px;
+}
+
+/* ============================================
+   MELHORIAS PARA VISUALIZAÇÃO DE ESTADO
+============================================ */
+/* Quando um estado é selecionado, esmaecer outros elementos */
+.state-selected #map .leaflet-tile-pane {
+  opacity: 0.3 !important;
+  transition: opacity 0.3s ease !important;
+}
+
+.state-selected #map .leaflet-interactive:not(.state-active) {
+  opacity: 0.2 !important;
+  pointer-events: none !important;
+}
+
+/* Estado ativo (selecionado) */
+.state-active {
+  filter: brightness(1.2) !important;
+  stroke-width: 2px !important;
+  stroke: var(--accent-cyan) !important;
+  z-index: 500 !important;
 }
 
 /* ============================================
@@ -778,6 +884,22 @@ select:hover {
   
   .controls {
     padding: 16px;
+  }
+  
+  /* Tooltip mobile */
+  .custom-tooltip {
+    max-width: 250px !important;
+    font-size: 0.85rem !important;
+  }
+  
+  .tt-head {
+    font-size: 0.9rem !important;
+    padding: 10px 12px !important;
+  }
+  
+  .tt-body {
+    padding: 10px 12px !important;
+    font-size: 0.85rem !important;
   }
 }
 
@@ -879,10 +1001,7 @@ select,
 /* Garantir que elementos específicos tenham z-index alto o suficiente */
 .btn-primary,
 .btn-back,
-.map-btn,
-.modal-overlay,
-.modal-content,
-.close-btn {
+.map-btn {
   z-index: 10000 !important;
 }
 
@@ -907,4 +1026,51 @@ select,
 /* Estilo para o seletor de cores do Pickr */
 .pickr {
   z-index: 100000 !important;
+}
+
+/* ============================================
+   MELHORIAS ESPECÍFICAS PARA O MAPA
+   (Estas regras garantem que o tooltip apareça sempre)
+============================================ */
+
+/* Garantir que elementos SVG sejam clicáveis */
+.leaflet-overlay-pane svg path {
+  pointer-events: auto !important;
+}
+
+/* Melhorar a detecção de hover em áreas pequenas */
+.leaflet-interactive {
+  stroke-width: 0.5px !important;
+  stroke: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Quando hover, destacar a área */
+.leaflet-interactive:hover {
+  stroke-width: 2px !important;
+  stroke: var(--accent-cyan) !important;
+  filter: brightness(1.1) !important;
+}
+
+/* Tooltip sempre visível e bem posicionado */
+.leaflet-tooltip {
+  opacity: 1 !important;
+  transition: opacity 0.2s ease !important;
+}
+
+.leaflet-tooltip.leaflet-interactive {
+  cursor: pointer !important;
+}
+
+/* Garantir que o tooltip não desapareça abruptamente */
+.leaflet-tooltip-top {
+  margin-top: -15px !important;
+}
+
+/* Estilo para tooltips com nomes longos */
+.tt-head {
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+  max-height: 80px !important;
+  overflow-y: auto !important;
 }
