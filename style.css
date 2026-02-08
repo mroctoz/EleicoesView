@@ -1,1076 +1,146 @@
-/* style.css - Design Moderno e Funcional para Eleições Históricas View */
 :root {
-  /* Cores modernas e vibrantes */
-  --bg-primary: #0a0c10;
-  --bg-secondary: #111827;
-  --bg-card: rgba(17, 24, 39, 0.95);
-  --bg-card-glass: rgba(30, 41, 59, 0.85);
-  --accent-blue: #3b82f6;
-  --accent-blue-light: #60a5fa;
-  --accent-purple: #8b5cf6;
-  --accent-green: #10b981;
-  --accent-amber: #f59e0b;
-  --accent-red: #ef4444;
-  --accent-cyan: #06b6d4;
-  
-  /* Gradientes modernos */
-  --gradient-primary: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-  --gradient-dark: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  --gradient-card: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%);
-  --gradient-historic: linear-gradient(135deg, #8b5cf6 0%, #06b6d4 100%);
-  
-  /* Cores de texto */
-  --text-primary: #ffffff;
-  --text-secondary: #e2e8f0;
-  --text-muted: #94a3b8;
-  --text-accent: #60a5fa;
-  
-  /* Bordas e sombras */
-  --border-color: rgba(255, 255, 255, 0.1);
-  --border-light: rgba(255, 255, 255, 0.05);
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
-  --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.3);
-  --shadow-glow-purple: 0 0 20px rgba(139, 92, 246, 0.3);
-  --shadow-glow-cyan: 0 0 20px rgba(6, 182, 212, 0.3);
-  
-  /* Tamanhos e espaçamentos */
-  --sidebar-width: 380px;
-  --bottom-nav-height: 70px;
-  --border-radius-sm: 8px;
-  --border-radius-md: 12px;
-  --border-radius-lg: 16px;
-  --border-radius-xl: 20px;
-  --border-radius-full: 9999px;
-  
-  /* Transições */
-  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+    --bg-primary: #0a0c10;
+    --bg-secondary: #11141a;
+    --bg-card: rgba(20, 24, 32, 0.98);
+    --accent-blue: #3b82f6;
+    --text-primary: #ffffff;
+    --text-muted: #94a3b8;
+    --border-color: rgba(255, 255, 255, 0.1);
+    --gradient-primary: linear-gradient(135deg, #3b82f6, #8b5cf6);
 }
 
-/* ============================================
-   RESET E ESTILOS GLOBAIS
-============================================ */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  outline: none;
-  -webkit-tap-highlight-color: transparent;
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
+* { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  overflow: hidden;
-  height: 100vh;
-  width: 100vw;
-  font-weight: 400;
-  line-height: 1.5;
-  position: relative;
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    overflow: hidden;
+    height: 100vh;
 }
 
-/* ============================================
-   SCROLLBAR PERSONALIZADA
-============================================ */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
+#app { width: 100vw; height: 100vh; display: flex; position: relative; }
 
-::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.5);
-  border-radius: var(--border-radius-full);
-}
+/* Fundo do mapa escuro para contraste */
+#map { flex: 1; height: 100%; background: #1a1a1a; z-index: 1; }
 
-::-webkit-scrollbar-thumb {
-  background: var(--gradient-historic);
-  border-radius: var(--border-radius-full);
-  transition: all var(--transition-normal);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to bottom, #8b5cf6, #06b6d4);
-}
-
-/* ============================================
-   LAYOUT PRINCIPAL
-============================================ */
-#app {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  position: relative;
-  background: var(--bg-secondary);
-  overflow: hidden;
-}
-
-/* Efeito de fundo sutil */
-#app::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--accent-purple), var(--accent-cyan), transparent);
-  z-index: 1;
-}
-
-/* ============================================
-   MAPA - MELHORIAS ESPECÍFICAS
-============================================ */
-#map {
-  flex: 1;
-  height: 100%;
-  background: var(--bg-secondary);
-  z-index: 1;
-  position: relative;
-  transition: all var(--transition-normal);
-}
-
-/* Remover fundo indesejado ao clicar em estado */
-#map .leaflet-layer:not(.leaflet-interactive) {
-  opacity: 0.4 !important;
-}
-
-/* Melhorar a renderização dos polígonos */
-.leaflet-pane.leaflet-overlay-pane svg {
-  shape-rendering: geometricPrecision !important;
-}
-
-/* Garantir que todos os elementos interativos sejam clicáveis */
-.leaflet-interactive {
-  cursor: pointer !important;
-  pointer-events: auto !important;
-  stroke-linejoin: round !important;
-  stroke-linecap: round !important;
-}
-
-/* Suavizar transições do mapa */
-.leaflet-fade-anim .leaflet-tile,
-.leaflet-fade-anim .leaflet-popup {
-  transition: opacity 0.3s linear !important;
-}
-
-/* ============================================
-   LOADER
-============================================ */
-#loader {
-  position: absolute;
-  inset: 0;
-  background: rgba(5, 5, 5, 0.95);
-  backdrop-filter: blur(10px);
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  transition: opacity var(--transition-normal);
-  pointer-events: auto !important;
-}
-
-#loader h3 {
-  margin-top: 20px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  letter-spacing: 1px;
-}
-
-.hidden {
-  opacity: 0;
-  pointer-events: none !important;
-}
-
-.spinner {
-  width: 60px;
-  height: 60px;
-  border: 4px solid rgba(255, 255, 255, 0.1);
-  border-top-color: var(--accent-cyan);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 20px;
-  box-shadow: var(--shadow-glow-cyan);
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* ============================================
-   SIDEBARS - FUNCIONAIS E CLICÁVEIS
-============================================ */
 .sidebar {
-  width: var(--sidebar-width);
-  min-width: var(--sidebar-width);
-  background: var(--bg-card);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  display: flex;
-  flex-direction: column;
-  z-index: 100;
-  border-right: 1px solid var(--border-color);
-  height: 100%;
-  box-shadow: var(--shadow-xl);
-  transition: all var(--transition-normal);
-  position: relative;
-  /* Garante que todos os elementos filhos sejam clicáveis */
-  pointer-events: auto !important;
+    width: 380px;
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    display: flex; flex-direction: column;
+    z-index: 1000;
+    border-right: 1px solid var(--border-color);
+    box-shadow: 5px 0 30px rgba(0,0,0,0.5);
 }
+.sidebar-right { border-left: 1px solid var(--border-color); border-right: none; width: 420px; }
 
-.sidebar * {
-  pointer-events: auto !important;
-  position: relative;
-}
-
-.sidebar-right {
-  width: var(--sidebar-width);
-  min-width: var(--sidebar-width);
-  background: var(--bg-card);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  display: flex;
-  flex-direction: column;
-  z-index: 100;
-  border-left: 1px solid var(--border-color);
-  height: 100%;
-  box-shadow: var(--shadow-xl);
-  transition: all var(--transition-normal);
-  position: relative;
-  /* Garante que todos os elementos filhos sejam clicáveis */
-  pointer-events: auto !important;
-}
-
-.sidebar-right * {
-  pointer-events: auto !important;
-  position: relative;
-}
-
-/* ============================================
-   HEADER - ÁREA SUPERIOR
-============================================ */
 .header {
-  padding: 20px;
-  background: var(--gradient-dark);
-  border-bottom: 1px solid var(--border-color);
-  flex-shrink: 0;
-  position: relative;
-  overflow: hidden;
-  z-index: 110;
-  /* Garante clicabilidade */
-  pointer-events: auto !important;
+    padding: 24px;
+    background: linear-gradient(180deg, rgba(10, 12, 16, 1) 0%, rgba(10, 12, 16, 0.8) 100%);
+    border-bottom: 1px solid var(--border-color);
 }
-
-.header::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(45deg, transparent 30%, rgba(139, 92, 246, 0.05) 100%);
-  z-index: -1;
-}
-
-.header h1, .header h2 {
-  font-size: 1.4rem;
-  font-weight: 800;
-  margin: 0;
-  background: var(--gradient-historic);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: -0.5px;
-  position: relative;
-  padding-bottom: 8px;
-  z-index: 112;
-  pointer-events: auto !important;
-}
-
 .header h1 {
-  font-size: 1.6rem;
-  margin-bottom: 5px;
+    font-size: 1.4rem; font-weight: 800;
+    background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
 
-.header h2 {
-  font-size: 1.3rem;
-}
+.controls { padding: 20px; flex: 1; overflow-y: auto; }
 
-.header h1::after, .header h2::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 40px;
-  height: 3px;
-  background: var(--gradient-historic);
-  border-radius: var(--border-radius-full);
-  z-index: 113;
-}
+.control-group { margin-bottom: 15px; }
+.control-group label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
 
-.header div {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  margin-top: 5px;
-  font-weight: 500;
-}
-
-/* ============================================
-   CONTROLES E CONTAINERS - TOTALMENTE CLICÁVEIS
-============================================ */
-.controls {
-  padding: 20px;
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  position: relative;
-  z-index: 110;
-  pointer-events: auto !important;
-}
-
-.controls * {
-  pointer-events: auto !important;
-}
-
-.control-group {
-  margin-bottom: 5px;
-  position: relative;
-  z-index: 111;
-  pointer-events: auto !important;
-}
-
-.control-group label {
-  display: block;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  margin-bottom: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  z-index: 112;
-  pointer-events: auto !important;
-}
-
-/* ============================================
-   BOTÕES - TOTALMENTE FUNCIONAIS
-============================================ */
-.btn-primary {
-  width: 100%;
-  padding: 16px;
-  border-radius: var(--border-radius-md);
-  background: var(--gradient-historic);
-  border: none;
-  font-weight: 700;
-  color: white;
-  cursor: pointer !important;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-top: 10px;
-  font-size: 0.9rem;
-  transition: all var(--transition-normal);
-  position: relative;
-  overflow: hidden;
-  z-index: 120 !important;
-  pointer-events: auto !important;
-}
-
-.btn-primary::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.7s ease;
-  z-index: -1;
-}
-
-.btn-primary:hover::before {
-  left: 100%;
-}
-
-.btn-primary:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-glow-cyan);
-  z-index: 121 !important;
-}
-
-.btn-primary:active {
-  transform: translateY(0);
-  z-index: 122 !important;
-}
-
-.btn-back {
-  width: 100%;
-  padding: 14px;
-  border-radius: var(--border-radius-md);
-  background: rgba(30, 41, 59, 0.8);
-  border: 1px solid var(--border-light);
-  color: var(--text-secondary);
-  cursor: pointer !important;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  transition: all var(--transition-fast);
-  z-index: 120 !important;
-  pointer-events: auto !important;
-}
-
-.btn-back:hover {
-  background: rgba(30, 41, 59, 1);
-  border-color: var(--accent-cyan);
-  color: var(--text-primary);
-  z-index: 121 !important;
-}
-
-/* ============================================
-   SELECTS - FUNCIONAIS
-============================================ */
 select {
-  width: 100%;
-  padding: 14px;
-  border-radius: var(--border-radius-md);
-  border: 1px solid var(--border-light);
-  background-color: rgba(15, 23, 42, 0.8);
-  color: var(--text-primary);
-  font-family: inherit;
-  font-size: 0.95rem;
-  transition: all var(--transition-fast);
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 15px center;
-  background-size: 12px;
-  cursor: pointer !important;
-  z-index: 120 !important;
-  position: relative;
-  pointer-events: auto !important;
+    width: 100%; padding: 12px; border-radius: 8px;
+    border: 1px solid #333;
+    background-color: #050505; color: white;
+    font-family: inherit; font-size: 0.9rem;
+    appearance: none; cursor: pointer;
 }
+select:focus { border-color: var(--accent-blue); outline: none; }
+option { background-color: #050505; color: white; padding: 10px; }
 
-select:focus {
-  border-color: var(--accent-cyan);
-  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
-  outline: none;
-  z-index: 121 !important;
+button.btn-primary { 
+    width: 100%; padding: 12px; border-radius: 8px;
+    background: var(--gradient-primary); border: none; 
+    font-weight: 700; color: white; cursor: pointer; margin-top: 10px;
+    transition: transform 0.2s;
 }
+button.btn-primary:hover { transform: translateY(-2px); }
 
-select:hover {
-  border-color: rgba(255, 255, 255, 0.2);
-  z-index: 122 !important;
+button.btn-back {
+    width: 100%; padding: 10px; border-radius: 8px;
+    background: #222; border: 1px solid #444; 
+    color: white; cursor: pointer; margin-bottom: 15px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    font-size: 0.9rem; font-weight: 600;
 }
+button.btn-back:hover { background: #333; border-color: var(--accent-blue); }
 
-/* ============================================
-   CANDIDATOS - LISTAGEM
-============================================ */
+/* LISTA DIREITA */
 .cand-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  margin-bottom: 10px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: var(--border-radius-md);
-  transition: all var(--transition-fast);
-  position: relative;
-  z-index: 110;
-  pointer-events: auto !important;
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px; margin-bottom: 8px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 8px; transition: all 0.2s;
 }
-
-.cand-row:hover {
-  background: rgba(255, 255, 255, 0.06);
-  transform: translateX(5px);
-  border-color: rgba(255, 255, 255, 0.1);
-  z-index: 111 !important;
-}
-
-.cand-row.disabled {
-  opacity: 0.6;
-  filter: grayscale(0.5);
-}
+.cand-row:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); }
+.cand-row.disabled { opacity: 0.4; filter: grayscale(1); }
 
 .cand-check {
-  width: 20px;
-  height: 20px;
-  border-radius: var(--border-radius-sm);
-  border: 2px solid var(--border-light);
-  cursor: pointer !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--transition-fast);
-  z-index: 112 !important;
-  position: relative;
-  pointer-events: auto !important;
+    width: 18px; height: 18px; border: 2px solid #555; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
 }
+.cand-check.checked { background: var(--accent-blue); border-color: var(--accent-blue); }
+.cand-check.checked::after { content: '✓'; color: white; font-size: 12px; font-weight: 900; }
+.cand-color { width: 18px; height: 18px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.5); cursor: pointer; }
+.cand-info { flex: 1; min-width: 0; }
+.cand-head { display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 600; margin-bottom: 2px; }
+.cand-sub { font-size: 0.75rem; color: var(--text-muted); display: flex; justify-content: space-between; }
+.progress-bar { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+.progress-fill { height: 100%; transition: width 0.5s ease; }
 
-.cand-check.checked {
-  background: var(--accent-cyan);
-  border-color: var(--accent-cyan);
-}
-
-.cand-check.checked::after {
-  content: "✓";
-  color: white;
-  font-size: 0.8rem;
-  font-weight: bold;
-}
-
-.cand-color {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-  flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  z-index: 112;
-  cursor: pointer !important;
-  position: relative;
-  pointer-events: auto !important;
-}
-
-.cand-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.cand-head {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.95rem;
-  font-weight: 600;
-  margin-bottom: 6px;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.cand-head span:first-child {
-  flex: 1;
-  min-width: 120px;
-  word-break: break-word;
-  overflow-wrap: break-word;
-  hyphens: auto;
-}
-
-.cand-sub {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  margin-bottom: 8px;
-}
-
-.progress-bar {
-  height: 6px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: var(--border-radius-full);
-  margin-top: 8px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-  border-radius: var(--border-radius-full);
-}
-
-/* ============================================
-   CONTROLES DO MAPA - FUNCIONAIS
-============================================ */
-.map-controls {
-  position: absolute;
-  top: 25px;
-  right: 410px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  z-index: 900;
-  pointer-events: auto !important;
-}
-
-.map-controls * {
-  pointer-events: auto !important;
-}
-
-.map-btn {
-  width: 48px;
-  height: 48px;
-  background: rgba(15, 23, 42, 0.9);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--border-light);
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--border-radius-md);
-  cursor: pointer !important;
-  font-size: 1.3rem;
-  transition: all var(--transition-fast);
-  box-shadow: var(--shadow-lg);
-  z-index: 910 !important;
-  position: relative;
-  pointer-events: auto !important;
-}
-
-.map-btn:hover {
-  background: rgba(30, 41, 59, 0.95);
-  color: var(--text-primary);
-  border-color: var(--accent-cyan);
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-glow-cyan);
-  z-index: 920 !important;
-}
-
-.map-btn-dl {
-  color: var(--accent-cyan);
-  border-color: rgba(6, 182, 212, 0.4);
-}
-
-.map-btn-dl:hover {
-  color: var(--accent-cyan);
-}
-
-/* ============================================
-   LEGENDA
-============================================ */
+/* LEGENDA */
 .legend {
-  position: absolute;
-  bottom: 30px;
-  right: 410px;
-  background: rgba(15, 23, 42, 0.9);
-  backdrop-filter: blur(10px);
-  padding: 20px;
-  border: 1px solid var(--border-light);
-  border-radius: var(--border-radius-lg);
-  z-index: 900;
-  box-shadow: var(--shadow-xl);
-  transition: all var(--transition-normal);
-  pointer-events: auto !important;
+    position: absolute; bottom: 30px; right: 450px;
+    background: #0a0c10; padding: 15px; border: 1px solid #333;
+    border-radius: 12px; z-index: 999; box-shadow: 0 10px 40px rgba(0,0,0,0.8);
 }
-
-.legend:hover {
-  background: rgba(15, 23, 42, 0.95);
-  border-color: var(--accent-cyan);
+/* Ajuste do Grid para refletir os 9 degraus */
+.legend-grid { 
+    display: flex; height: 20px; width: 225px; /* 25px por item */
+    border-radius: 4px; overflow: hidden; border: 1px solid #444; 
 }
+.legend-item { flex: 1; border-right: 1px solid rgba(0,0,0,0.3); }
+.legend-item:last-child { border-right: none; }
 
-.legend-grid {
-  display: flex;
-  height: 24px;
-  width: 250px;
-  border-radius: var(--border-radius-md);
-  overflow: hidden;
-  border: 1px solid var(--border-light);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+.map-controls {
+    position: absolute; top: 20px; right: 450px;
+    display: flex; flex-direction: column; gap: 8px; z-index: 999;
 }
-
-.legend-item {
-  flex: 1;
-  border-right: 1px solid rgba(0, 0, 0, 0.3);
-}
-
-/* ============================================
-   TOOLTIP - MELHORIAS CRÍTICAS
-============================================ */
-.custom-tooltip {
-  background: rgba(15, 23, 42, 0.98) !important;
-  backdrop-filter: blur(10px) !important;
-  border: 1px solid var(--border-light) !important;
-  color: white !important;
-  border-radius: var(--border-radius-md) !important;
-  font-family: 'Inter', sans-serif !important;
-  padding: 0 !important;
-  box-shadow: var(--shadow-xl) !important;
-  max-width: 300px !important;
-  min-width: 200px !important;
-  z-index: 10000 !important;
-  pointer-events: none !important;
-  overflow: hidden !important;
-}
-
-/* Garantir que o tooltip fique acima de tudo */
-.leaflet-tooltip {
-  z-index: 10000 !important;
-}
-
-/* Melhorar a ponta do tooltip */
-.leaflet-tooltip-top:before {
-  border-top-color: rgba(15, 23, 42, 0.98) !important;
-}
-
-.leaflet-tooltip-bottom:before {
-  border-bottom-color: rgba(15, 23, 42, 0.98) !important;
-}
-
-.leaflet-tooltip-left:before {
-  border-left-color: rgba(15, 23, 42, 0.98) !important;
-}
-
-.leaflet-tooltip-right:before {
-  border-right-color: rgba(15, 23, 42, 0.98) !important;
-}
-
-.tt-head {
-  background: rgba(30, 41, 59, 0.95) !important;
-  padding: 12px 16px !important;
-  font-weight: 700 !important;
-  border-bottom: 1px solid var(--border-light) !important;
-  border-radius: var(--border-radius-md) var(--border-radius-md) 0 0 !important;
-  font-size: 0.95rem !important;
-  line-height: 1.3 !important;
-  word-wrap: break-word !important;
-  overflow-wrap: break-word !important;
-  hyphens: auto !important;
-  max-width: 280px !important;
-}
-
-.tt-body {
-  padding: 12px 16px !important;
-  font-size: 0.9rem !important;
-  line-height: 1.4 !important;
-}
-
-.tt-body div {
-  margin-bottom: 4px !important;
-}
-
-.tt-body div:last-child {
-  margin-bottom: 0 !important;
-}
-
-/* Nome do candidato no tooltip - quebra de linha */
-.tt-body div[style*="font-weight:800"] {
-  word-wrap: break-word !important;
-  overflow-wrap: break-word !important;
-  hyphens: auto !important;
-  line-height: 1.3 !important;
-  max-width: 280px !important;
-}
-
-/* ============================================
-   ESTILOS ESPECIAIS PARA TOTAIS
-============================================ */
-#totalVotesVal {
-  font-size: 2rem;
-  font-weight: 900;
-  color: white;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-  letter-spacing: -0.5px;
-  background: linear-gradient(to right, #fff, var(--accent-cyan));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-top: 5px;
-}
-
-/* ============================================
-   MELHORIAS PARA VISUALIZAÇÃO DE ESTADO
-============================================ */
-/* Quando um estado é selecionado, esmaecer outros elementos */
-.state-selected #map .leaflet-tile-pane {
-  opacity: 0.3 !important;
-  transition: opacity 0.3s ease !important;
-}
-
-.state-selected #map .leaflet-interactive:not(.state-active) {
-  opacity: 0.2 !important;
-  pointer-events: none !important;
-}
-
-/* Estado ativo (selecionado) */
-.state-active {
-  filter: brightness(1.2) !important;
-  stroke-width: 2px !important;
-  stroke: var(--accent-cyan) !important;
-  z-index: 500 !important;
-}
-
-/* ============================================
-   RESPONSIVIDADE
-============================================ */
-@media (max-width: 1024px) {
-  :root {
-    --sidebar-width: 340px;
-  }
-  
-  .map-controls {
-    right: 360px;
-  }
-  
-  .legend {
-    right: 360px;
-  }
-}
-
-@media (max-width: 768px) {
-  #app {
-    display: block;
-    position: relative;
-  }
-  
-  #map {
-    width: 100%;
-    height: 100%;
-  }
-  
-  .sidebar, .sidebar-right {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    top: auto;
-    width: 100%;
-    height: auto;
-    max-height: 85vh;
-    border: none;
-    border-radius: 24px 24px 0 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.15);
-    background: rgba(15, 23, 42, 0.97);
-    backdrop-filter: blur(30px);
-    -webkit-backdrop-filter: blur(30px);
-    box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.9);
-    z-index: 4000;
-    transform: translateY(110%);
-    transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
-    pointer-events: auto !important;
-  }
-  
-  .sidebar.active, .sidebar-right.active {
-    transform: translateY(0);
-  }
-  
-  /* Ajustes de UI Mobile */
-  .legend {
-    display: none !important;
-  }
-  
-  .map-controls {
-    top: 20px;
-    right: 20px;
-    flex-direction: row;
-    gap: 8px;
-  }
-  
-  .map-btn {
-    width: 44px;
-    height: 44px;
-  }
-  
-  .header {
-    padding: 16px;
-  }
-  
-  .header h1, .header h2 {
-    font-size: 1.2rem;
-  }
-  
-  #btnBack {
-    display: none !important;
-  }
-  
-  .controls {
-    padding: 16px;
-  }
-  
-  /* Tooltip mobile */
-  .custom-tooltip {
-    max-width: 250px !important;
-    font-size: 0.85rem !important;
-  }
-  
-  .tt-head {
-    font-size: 0.9rem !important;
-    padding: 10px 12px !important;
-  }
-  
-  .tt-body {
-    padding: 10px 12px !important;
-    font-size: 0.85rem !important;
-  }
-}
-
-/* ============================================
-   CORREÇÕES DE EMERGÊNCIA - GARANTIR FUNCIONALIDADE
-============================================ */
-
-/* Garantir que todos os elementos interativos sejam clicáveis */
-button, 
-input[type="button"], 
-input[type="submit"], 
-input[type="reset"],
-select,
-.btn-primary,
-.btn-back,
-.map-btn,
-.cand-check,
-.cand-color {
-  cursor: pointer !important;
-  pointer-events: auto !important;
-  z-index: 10000 !important;
-  position: relative !important;
-}
-
-/* Remover qualquer sobreposição que bloqueie cliques */
-#app > * {
-  pointer-events: auto !important;
-}
-
-/* Garantir que elementos dentro das sidebars sejam clicáveis */
-.sidebar > *,
-.sidebar-right > * {
-  pointer-events: auto !important;
-}
-
-/* Remover eventuais bloqueios de clique em elementos pai */
-#app,
-#map {
-  pointer-events: auto !important;
-}
-
-/* ============================================
-   ANIMAÇÕES E EFEITOS ADICIONAIS
-============================================ */
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
-}
-
-.pulse {
-  animation: pulse 2s infinite;
-}
-
-/* Efeito de vidro */
-.glass-effect {
-  background: rgba(30, 41, 59, 0.7);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Efeito de brilho */
-.glow {
-  box-shadow: 0 0 15px rgba(6, 182, 212, 0.5) !important;
-}
-
-/* Texto com gradiente */
-.gradient-text {
-  background: var(--gradient-historic);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* Elementos flutuantes */
-.float {
-  animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-
-/* ============================================
-   GARANTIA FINAL DE FUNCIONALIDADE
-============================================ */
-
-/* Override para qualquer estilo que possa bloquear cliques */
-* {
-  pointer-events: auto !important;
-}
-
-/* Exceção apenas para o loader quando estiver escondido */
-#loader.hidden {
-  pointer-events: none !important;
-}
-
-/* Garantir que elementos específicos tenham z-index alto o suficiente */
-.btn-primary,
-.btn-back,
 .map-btn {
-  z-index: 10000 !important;
+    width: 40px; height: 40px; background: #0a0c10; border: 1px solid #333;
+    color: #ddd; display: flex; align-items: center; justify-content: center;
+    border-radius: 8px; cursor: pointer; font-size: 1.2rem;
 }
+.map-btn:hover { background: #222; color: white; }
 
-/* Ajuste para o mapa Leaflet - manter funcionalidade do mapa */
-.leaflet-container,
-.leaflet-map-pane,
-.leaflet-tile-pane,
-.leaflet-overlay-pane,
-.leaflet-shadow-pane,
-.leaflet-marker-pane,
-.leaflet-tooltip-pane,
-.leaflet-popup-pane {
-  pointer-events: auto !important;
-  z-index: 1 !important;
+/* TOOLTIP */
+.custom-tooltip {
+    background: #0a0c10; border: 1px solid #333; color: white;
+    border-radius: 8px; font-family: 'Inter', sans-serif; padding: 0;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
 }
+.tt-head { background: #151a23; padding: 10px; font-weight: 700; border-bottom: 1px solid #333; border-radius: 8px 8px 0 0; }
+.tt-body { padding: 10px; }
 
-/* Efeito de brilho para elementos ativos */
-.active-glow {
-  box-shadow: 0 0 20px rgba(139, 92, 246, 0.5) !important;
+#loader {
+    position: absolute; inset: 0; background: rgba(5,5,5,0.95); z-index: 9999;
+    display: flex; align-items: center; justify-content: center; flex-direction: column;
+    transition: opacity 0.3s;
 }
-
-/* Estilo para o seletor de cores do Pickr */
-.pickr {
-  z-index: 100000 !important;
+.hidden { opacity: 0; pointer-events: none; }
+.spinner {
+    width: 50px; height: 50px; border: 4px solid #333; border-top-color: var(--accent-blue);
+    border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px;
 }
-
-/* ============================================
-   MELHORIAS ESPECÍFICAS PARA O MAPA
-   (Estas regras garantem que o tooltip apareça sempre)
-============================================ */
-
-/* Garantir que elementos SVG sejam clicáveis */
-.leaflet-overlay-pane svg path {
-  pointer-events: auto !important;
-}
-
-/* Melhorar a detecção de hover em áreas pequenas */
-.leaflet-interactive {
-  stroke-width: 0.5px !important;
-  stroke: rgba(255, 255, 255, 0.3) !important;
-}
-
-/* Quando hover, destacar a área */
-.leaflet-interactive:hover {
-  stroke-width: 2px !important;
-  stroke: var(--accent-cyan) !important;
-  filter: brightness(1.1) !important;
-}
-
-/* Tooltip sempre visível e bem posicionado */
-.leaflet-tooltip {
-  opacity: 1 !important;
-  transition: opacity 0.2s ease !important;
-}
-
-.leaflet-tooltip.leaflet-interactive {
-  cursor: pointer !important;
-}
-
-/* Garantir que o tooltip não desapareça abruptamente */
-.leaflet-tooltip-top {
-  margin-top: -15px !important;
-}
-
-/* Estilo para tooltips com nomes longos */
-.tt-head {
-  white-space: normal !important;
-  word-break: break-word !important;
-  overflow-wrap: anywhere !important;
-  max-height: 80px !important;
-  overflow-y: auto !important;
-}
+@keyframes spin { to { transform: rotate(360deg); } }
