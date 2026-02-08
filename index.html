@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eleições Históricas View - High Res</title>
+    <title>Eleições Históricas View</title>
     
     <!-- Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -17,154 +17,11 @@
     <link href="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/nano.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/pickr.min.js"></script>
 
-    <style>
-        :root {
-            --bg-primary: #0a0c10;
-            --bg-secondary: #11141a;
-            --bg-card: rgba(20, 24, 32, 0.98);
-            --accent-blue: #3b82f6;
-            --text-primary: #ffffff;
-            --text-muted: #94a3b8;
-            --border-color: rgba(255, 255, 255, 0.1);
-            --gradient-primary: linear-gradient(135deg, #3b82f6, #8b5cf6);
-        }
+    <!-- FileSaver (Para Download do Mapa) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            overflow: hidden;
-            height: 100vh;
-        }
-
-        #app { width: 100vw; height: 100vh; display: flex; position: relative; }
-        
-        /* Fundo do mapa escuro para contraste */
-        #map { flex: 1; height: 100%; background: #1a1a1a; z-index: 1; }
-
-        .sidebar {
-            width: 380px;
-            background: var(--bg-card);
-            backdrop-filter: blur(20px);
-            display: flex; flex-direction: column;
-            z-index: 1000;
-            border-right: 1px solid var(--border-color);
-            box-shadow: 5px 0 30px rgba(0,0,0,0.5);
-        }
-        .sidebar-right { border-left: 1px solid var(--border-color); border-right: none; width: 420px; }
-
-        .header {
-            padding: 24px;
-            background: linear-gradient(180deg, rgba(10, 12, 16, 1) 0%, rgba(10, 12, 16, 0.8) 100%);
-            border-bottom: 1px solid var(--border-color);
-        }
-        .header h1 {
-            font-size: 1.4rem; font-weight: 800;
-            background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
-
-        .controls { padding: 20px; flex: 1; overflow-y: auto; }
-        
-        .control-group { margin-bottom: 15px; }
-        .control-group label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-        
-        select {
-            width: 100%; padding: 12px; border-radius: 8px;
-            border: 1px solid #333;
-            background-color: #050505; color: white;
-            font-family: inherit; font-size: 0.9rem;
-            appearance: none; cursor: pointer;
-        }
-        select:focus { border-color: var(--accent-blue); outline: none; }
-        option { background-color: #050505; color: white; padding: 10px; }
-
-        button.btn-primary { 
-            width: 100%; padding: 12px; border-radius: 8px;
-            background: var(--gradient-primary); border: none; 
-            font-weight: 700; color: white; cursor: pointer; margin-top: 10px;
-            transition: transform 0.2s;
-        }
-        button.btn-primary:hover { transform: translateY(-2px); }
-
-        button.btn-back {
-            width: 100%; padding: 10px; border-radius: 8px;
-            background: #222; border: 1px solid #444; 
-            color: white; cursor: pointer; margin-bottom: 15px;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            font-size: 0.9rem; font-weight: 600;
-        }
-        button.btn-back:hover { background: #333; border-color: var(--accent-blue); }
-
-        /* LISTA DIREITA */
-        .cand-row {
-            display: flex; align-items: center; gap: 10px;
-            padding: 12px; margin-bottom: 8px;
-            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 8px; transition: all 0.2s;
-        }
-        .cand-row:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); }
-        .cand-row.disabled { opacity: 0.4; filter: grayscale(1); }
-
-        .cand-check {
-            width: 18px; height: 18px; border: 2px solid #555; border-radius: 4px;
-            display: flex; align-items: center; justify-content: center; cursor: pointer;
-        }
-        .cand-check.checked { background: var(--accent-blue); border-color: var(--accent-blue); }
-        .cand-check.checked::after { content: '✓'; color: white; font-size: 12px; font-weight: 900; }
-        .cand-color { width: 18px; height: 18px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.5); cursor: pointer; }
-        .cand-info { flex: 1; min-width: 0; }
-        .cand-head { display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 600; margin-bottom: 2px; }
-        .cand-sub { font-size: 0.75rem; color: var(--text-muted); display: flex; justify-content: space-between; }
-        .progress-bar { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 6px; overflow: hidden; }
-        .progress-fill { height: 100%; transition: width 0.5s ease; }
-
-        /* LEGENDA */
-        .legend {
-            position: absolute; bottom: 30px; right: 450px;
-            background: #0a0c10; padding: 15px; border: 1px solid #333;
-            border-radius: 12px; z-index: 999; box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-        }
-        /* Ajuste do Grid para refletir os 9 degraus */
-        .legend-grid { 
-            display: flex; height: 20px; width: 225px; /* 25px por item */
-            border-radius: 4px; overflow: hidden; border: 1px solid #444; 
-        }
-        .legend-item { flex: 1; border-right: 1px solid rgba(0,0,0,0.3); }
-        .legend-item:last-child { border-right: none; }
-
-        .map-controls {
-            position: absolute; top: 20px; right: 450px;
-            display: flex; flex-direction: column; gap: 8px; z-index: 999;
-        }
-        .map-btn {
-            width: 40px; height: 40px; background: #0a0c10; border: 1px solid #333;
-            color: #ddd; display: flex; align-items: center; justify-content: center;
-            border-radius: 8px; cursor: pointer; font-size: 1.2rem;
-        }
-        .map-btn:hover { background: #222; color: white; }
-
-        /* TOOLTIP */
-        .custom-tooltip {
-            background: #0a0c10; border: 1px solid #333; color: white;
-            border-radius: 8px; font-family: 'Inter', sans-serif; padding: 0;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-        }
-        .tt-head { background: #151a23; padding: 10px; font-weight: 700; border-bottom: 1px solid #333; border-radius: 8px 8px 0 0; }
-        .tt-body { padding: 10px; }
-
-        #loader {
-            position: absolute; inset: 0; background: rgba(5,5,5,0.95); z-index: 9999;
-            display: flex; align-items: center; justify-content: center; flex-direction: column;
-            transition: opacity 0.3s;
-        }
-        .hidden { opacity: 0; pointer-events: none; }
-        .spinner {
-            width: 50px; height: 50px; border: 4px solid #333; border-top-color: var(--accent-blue);
-            border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-    </style>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -251,6 +108,13 @@
     </aside>
 
     <div class="map-controls">
+        <div class="map-btn map-btn-dl" title="Baixar PNG" onclick="app.generateStaticMap('png')">
+            <i class="fas fa-image"></i>
+        </div>
+        <div class="map-btn map-btn-dl" title="Baixar Vetor SVG" onclick="app.generateStaticMap('svg')">
+            <i class="fas fa-bezier-curve"></i>
+        </div>
+        <div style="height:5px;"></div>
         <div class="map-btn" onclick="app.map.zoomIn()">+</div>
         <div class="map-btn" onclick="app.map.zoomOut()">-</div>
     </div>
@@ -303,7 +167,8 @@ const app = {
         full: null, 
         current: null, 
         names: {},
-        geoJsonCache: null // Cache para a malha municipal unificada
+        geoJsonCache: null, // Cache para a malha municipal unificada
+        brazilGeoJson: null // Cache para a malha estadual (para exportação)
     },
     state: {
         view: 'states', 
@@ -432,7 +297,7 @@ const app = {
                 smoothFactor: 0.3,
                 style: (f) => app.getStyle(f, 'municipios'),
                 onEachFeature: (f, layer) => {
-                    const id = f.properties.id || f.properties.codarea;
+                    const id = app.getFeatureId(f, 'municipios');
                     const name = app.data.names[id] || f.properties.name;
                     layer.on('click', (e) => {
                         L.DomEvent.stopPropagation(e);
@@ -465,7 +330,12 @@ const app = {
         const res = await fetch('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson');
         const data = await res.json();
         const ufMap = {'AC':'12','AL':'27','AM':'13','AP':'16','BA':'29','CE':'23','DF':'53','ES':'32','GO':'52','MA':'21','MG':'31','MS':'50','MT':'51','PA':'15','PB':'25','PE':'26','PI':'22','PR':'41','RJ':'33','RN':'24','RO':'11','RR':'14','RS':'43','SC':'42','SE':'28','SP':'35','TO':'17'};
-        data.features.forEach(f => f.properties.id = ufMap[f.properties.sigla]);
+        
+        // Injetar IDs no GeoJSON para cache e uso na exportação
+        data.features.forEach(f => {
+            f.properties.id = ufMap[f.properties.sigla];
+        });
+        app.data.brazilGeoJson = data;
 
         app.layers.brazil = L.geoJSON(data, {
             smoothFactor: 0.5,
@@ -487,7 +357,7 @@ const app = {
             const fullData = await app.fetchGeoJsonCache();
 
             const stateFeatures = fullData.features.filter(f => {
-                const cod = f.properties.id || f.properties.codarea;
+                const cod = app.getFeatureId(f, 'municipios');
                 return cod && cod.toString().startsWith(ufId);
             });
 
@@ -501,7 +371,7 @@ const app = {
                 smoothFactor: 0.3,
                 style: (f) => app.getStyle(f, 'municipios'),
                 onEachFeature: (f, l) => {
-                    const id = f.properties.id || f.properties.codarea;
+                    const id = app.getFeatureId(f, 'municipios');
                     const name = app.data.names[id] || f.properties.name;
                     l.on('click', (e) => {
                         L.DomEvent.stopPropagation(e);
@@ -633,21 +503,32 @@ const app = {
         return { total, winner, pct: winner ? (max/total)*100 : 0, ranking: rank };
     },
 
-    // ESTILO COM CONTORNO BRANCO FINO E DEGRADÊ DISCRETO
-    getStyle: (feature, scope) => {
-        if(!app.data.current) return { fillColor: '#111', weight: 0.2, color: '#ffffff' };
+    // Retorna a cor sólida do vencedor para um dado ID/Escopo (usado no mapa e exportação)
+    getFeatureColor: (id, scope) => {
+        if(!app.data.current) return '#111';
         
-        const id = feature.properties.id || feature.properties.codarea; 
         const raw = app.data.current[scope][id];
         const stats = app.recalcStats(raw || {});
 
         if (!stats || !stats.winner) {
-            return { fillColor: '#222', weight: 0.2, color: '#ffffff', fillOpacity: 1 };
+            return '#222';
         }
 
         const { party } = app.parseCandKey(stats.winner);
-        const color = app.getDiscreteColor(app.getCandColor(party), stats.pct);
+        return app.getDiscreteColor(app.getCandColor(party), stats.pct);
+    },
 
+    getFeatureId: (feature, scope) => {
+        if (scope === 'municipios') return String(feature.properties.id || feature.properties.codarea || '');
+        // Estados
+        return String(feature.properties.id || '');
+    },
+
+    // ESTILO COM CONTORNO BRANCO FINO E DEGRADÊ DISCRETO
+    getStyle: (feature, scope) => {
+        const id = app.getFeatureId(feature, scope);
+        const color = app.getFeatureColor(id, scope);
+        
         // BORDA MAIS FINA PARA MUNICÍPIOS (0.2) E MAIOR PARA ESTADOS (0.6)
         const borderWeight = scope === 'estados' ? 0.6 : 0.2;
 
@@ -707,6 +588,130 @@ const app = {
             app.refreshUI();
             pickr.destroyAndRemove();
         });
+    },
+
+    generateStaticMap: async (format) => {
+        const loader = document.getElementById('loader');
+        loader.classList.remove('hidden');
+        
+        setTimeout(() => {
+            try {
+                let features = [];
+                let scope = 'municipios';
+                
+                // Determinar o que exportar com base na visualização atual
+                if (app.state.view === 'states' && !app.state.selectedId) {
+                    // Visão Brasil (Estados)
+                    if (!app.data.brazilGeoJson) throw new Error("Dados do mapa não carregados.");
+                    features = app.data.brazilGeoJson.features;
+                    scope = 'estados';
+                } else if (app.state.selectedId && app.state.selectedId.length === 2) {
+                    // Visão Estado Específico (Municípios do estado)
+                    if (!app.data.geoJsonCache) throw new Error("Dados municipais não carregados.");
+                    features = app.data.geoJsonCache.features.filter(f => {
+                        const id = app.getFeatureId(f, 'municipios');
+                        return id.startsWith(app.state.selectedId);
+                    });
+                    scope = 'municipios';
+                } else if (app.state.view === 'all_cities') {
+                    // Visão Brasil (Todos os municípios)
+                    if (!app.data.geoJsonCache) throw new Error("Dados municipais não carregados.");
+                    features = app.data.geoJsonCache.features;
+                    scope = 'municipios';
+                } else {
+                    // Fallback para Brasil (Estados)
+                    features = app.data.brazilGeoJson ? app.data.brazilGeoJson.features : [];
+                    scope = 'estados';
+                }
+
+                if (features.length === 0) throw new Error("Nenhum dado para exportar.");
+
+                // Calcular Bounding Box
+                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                
+                features.forEach(f => {
+                    const scan = (coords) => {
+                        coords.forEach(pt => {
+                            if(typeof pt[0] === 'number'){
+                                if(pt[0] < minX) minX = pt[0];
+                                if(pt[0] > maxX) maxX = pt[0];
+                                if(pt[1] < minY) minY = pt[1];
+                                if(pt[1] > maxY) maxY = pt[1];
+                            } else {
+                                scan(pt);
+                            }
+                        });
+                    };
+                    if(f.geometry.type.includes('Polygon')) {
+                        scan(f.geometry.coordinates);
+                    }
+                });
+
+                // Configurar Projeção Simples (Mercator-ish ajustada para SVG)
+                const w = 4096;
+                const latD = maxY - minY;
+                const lonD = maxX - minX;
+                const h = w / (lonD/latD);
+                
+                const proj = (x,y) => [
+                    (x - minX) * (w / lonD),
+                    (maxY - y) * (h / latD) // Y invertido no SVG
+                ];
+
+                // Gerar SVG
+                let svgContent = '';
+                
+                features.forEach(f => {
+                    const id = app.getFeatureId(f, scope);
+                    const color = app.getFeatureColor(id, scope);
+                    
+                    let d = '';
+                    const draw = (r) => {
+                        let p = '';
+                        r.forEach((pt,i)=>{
+                            const [px,py] = proj(pt[0],pt[1]);
+                            p += (i===0 ? 'M' : 'L') + px.toFixed(1) + ',' + py.toFixed(1);
+                        });
+                        return p + 'Z ';
+                    };
+
+                    if(f.geometry.type === 'Polygon') {
+                        f.geometry.coordinates.forEach(r => d += draw(r));
+                    } else if(f.geometry.type === 'MultiPolygon') {
+                        f.geometry.coordinates.forEach(p => p.forEach(r => d += draw(r)));
+                    }
+
+                    // Stroke width ajustado pelo escopo
+                    const strW = scope === 'estados' ? 2 : 0.5;
+                    svgContent += `<path d="${d}" fill="${color}" stroke="#fff" stroke-width="${strW}"/>`;
+                });
+
+                const finalSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">${svgContent}</svg>`;
+                const fname = `mapa_${app.state.selectedName}_${scope}_${document.getElementById('yearSelect').value}`;
+
+                if(format === 'svg') {
+                    const blob = new Blob([finalSvg], {type: "image/svg+xml;charset=utf-8"});
+                    saveAs(blob, `${fname}.svg`);
+                } else {
+                    const img = new Image();
+                    img.onload = () => {
+                        const c = document.createElement('canvas');
+                        c.width = w;
+                        c.height = h;
+                        const ctx = c.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+                        c.toBlob(b => saveAs(b, `${fname}.png`));
+                    };
+                    img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(finalSvg)));
+                }
+
+            } catch(e) {
+                alert("Erro ao gerar mapa: " + e.message);
+                console.error(e);
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }, 100);
     }
 };
 
